@@ -35,6 +35,7 @@ try{S.sound=localStorage.getItem('uri-sound')!=='off'}catch(e){}
 const M=m=>(S.months[m]||(S.months[m]={received:0,paid:{}}));
 let loaded=false;
 async function loadAll(){
+  {const {data:{session},error}=await sb.auth.getSession();if(!session||error){const r=await sb.auth.refreshSession();if(r.error||!r.data.session)throw r.error||new Error('no session')}}
   const [e,mo,ns,fx]=await Promise.all([
     sb.from('expenses').select('*').order('date'),
     sb.from('months').select('*'),
@@ -310,7 +311,7 @@ $('loginForm').onsubmit=async e=>{e.preventDefault();$('lkGo').disabled=true;$('
   if(!mem||!mem.length){await sb.auth.signOut();showLock('login','이 계정은 사원 명부에 없어요. Supabase의 members 표에 이메일을 넣어주세요');return}
   pinView('set')};
 async function enterApp(){$('lkErr').textContent='';try{localStorage.setItem(SEEN_KEY,String(Date.now()))}catch(e){}
-  try{await loadAll()}catch(e){showLock('pin','데이터를 불러오지 못했어요. 인터넷 연결을 확인해주세요');return}
+  try{await loadAll()}catch(e){console.error(e);const m=String(e&&(e.message||e.code)||'');if(/session|jwt|refresh|token/i.test(m)){setPin(null);showLock('login','로그인 기간이 끝나서 다시 로그인해야 해요');}else showLock('pin','데이터를 불러오지 못했어요. 인터넷 연결을 확인하고 PIN을 다시 눌러주세요');return}
   $('lock').hidden=true;$('app').hidden=false;$('who').textContent=userEmail;subscribe();setRole(role);
   {const sc=$('scene');if(sc.scrollWidth>sc.clientWidth)sc.scrollLeft=(sc.scrollWidth-sc.clientWidth)*0.35}}
 function lockNow(){if(!$('app').hidden){pinView('enter')}}
