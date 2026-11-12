@@ -221,7 +221,8 @@ $('forgot').onclick=async()=>{setPin(null);await sb.auth.signOut();showLock('log
 $('loginForm').onsubmit=async e=>{e.preventDefault();$('lkGo').disabled=true;$('lkErr').textContent='';
   const {data,error}=await sb.auth.signInWithPassword({email:$('lkEmail').value.trim(),password:$('lkPw').value});
   $('lkGo').disabled=false;
-  if(error){$('lkErr').textContent='이메일이나 비밀번호가 맞지 않아요';return}
+  if(error){const m=(error.message||'')+'';console.error(error);
+    $('lkErr').textContent=/invalid login/i.test(m)?'이메일이나 비밀번호가 맞지 않아요':/not confirmed/i.test(m)?'이메일 인증이 안 된 계정이에요. Supabase Users에서 계정을 확인(Confirm)해주세요':/api key|apikey|jwt/i.test(m)?'앱 설정 키가 맞지 않아요 ('+m+')':'로그인 오류: '+m;return}
   userEmail=data.user.email;$('lkPw').value='';
   const {data:mem}=await sb.from('members').select('email');
   if(!mem||!mem.length){await sb.auth.signOut();showLock('login','이 계정은 사원 명부에 없어요. Supabase의 members 표에 이메일을 넣어주세요');return}
