@@ -187,7 +187,8 @@ const H_DED=[{id:'loan',n:'대출금',a:489101},{id:'mgmt',n:'관리비예산',a
 const H_DED_TOTAL=H_DED.reduce((s,d)=>s+d.a,0);
 let role='wife';try{role=localStorage.getItem('uri-role')||'wife'}catch(e){}
 const H=()=>{const p=M(ym).paid||(M(ym).paid={});return p.h||(p.h={salary:0,bonus:0,salaryOk:false,bonusOk:false,ded:{},sent:false})};
-const hIncome=()=>{const h=H();return (h.salary||0)+(h.bonus||0)};
+const H_INC=[['salary','20일 급여'],['bonus','25일 상여금'],['extra','가급 보너스']];
+const hIncome=()=>{const h=H();return H_INC.reduce((s,[k])=>s+(h[k]||0),0)};
 const hSend=()=>hIncome()-H_DED_TOTAL;
 function bossLines(){const h=H();
   if(h.sent)return ['생활비 보냈다!',won(h.sentAmount||0),'이번 달도 화이팅!'];
@@ -203,7 +204,7 @@ function renderBoss(){
   // income rows
   const inc=$('bIncome');
   if(!inc.children.length){
-    for(const [key,ok,label] of [['salary','salaryOk','20일 급여'],['bonus','bonusOk','25일 상여금']]){
+    for(const [key,label] of H_INC){const ok=key+'Ok';
       const row=document.createElement('div');row.className='incrow';row.dataset.k=key;
       const box=document.createElement('button');box.type='button';box.className='box';box.setAttribute('aria-label',label+' 입금 확인');
       const nm=document.createElement('span');nm.className='nm';nm.textContent=label;
@@ -238,7 +239,7 @@ function renderBossNumbers(){
   const am=document.createElement('span');am.className='am';am.textContent='';
   const st=document.createElement('span');st.className='stamp';st.textContent=h.sent?'이월 완료':'이체 대기';
   b.append(box,nm,am,st);b.disabled=!h.sent&&send<=0;
-  $('bSendHint').textContent=h.sent?'아내탭의 "이번 달 받은 돈"에 반영됐어요. 다시 누르면 이체를 취소해요.':send<=0?'급여와 상여금을 입력하면 보낼 금액이 계산돼요.':'이체한 뒤 누르면 아내탭의 이번 달 받은 돈으로 자동 반영돼요.';
+  $('bSendHint').classList.toggle('warn',!!(h.sent&&send!==h.sentAmount));$('bSendHint').textContent=h.sent&&send!==h.sentAmount?`보낸 뒤에 금액이 바뀌었어요 (지금 계산 ${won(send)}, 차이 ${won(send-(h.sentAmount||0))}). 이체를 한 번 취소했다가 다시 누르면 새 금액으로 반영돼요.`:h.sent?'아내탭의 "이번 달 받은 돈"에 반영됐어요. 다시 누르면 이체를 취소해요.':send<=0?'급여와 상여금을 입력하면 보낼 금액이 계산돼요.':'이체한 뒤 누르면 아내탭의 이번 달 받은 돈으로 자동 반영돼요.';
 }
 $('bSendBtn').onclick=()=>{const h=H(),m=M(ym);
   if(!h.sent){const amt=hSend();if(amt<=0)return;h.prevReceived=m.received||0;h.sent=true;h.sentAmount=amt;h.sentAt=new Date().toISOString();m.received=amt;play('coin');setTimeout(()=>play('fanfare'),250);toast(`생활비 ${won(amt)} 이월 완료!`)}
