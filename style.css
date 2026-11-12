@@ -195,3 +195,5 @@ table.hist td{padding:6px 4px;border-bottom:1px solid #d3cab3;text-align:right;f
 .places button{background:#fff;border:2px solid #000;border-radius:99px;padding:4px 12px;font-size:13px;box-shadow:inset 0 -2px 0 #ddd5c0}
 .places button[aria-pressed="true"]{background:var(--ink);color:#fff;box-shadow:none}
 .places button.recent{border-style:dashed}
+
+#fMethod{flex-wrap:wrap}#fMethod button{flex:1 1 22%;min-width:0;white-space:nowrap}

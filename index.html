@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -146,10 +146,12 @@
             <input class="field amt" id="fAmt" inputmode="numeric" placeholder="금액" aria-label="금액">
             <div class="depts" id="fDepts" role="group" aria-label="부서"></div>
             <div class="seg" id="fMethod" role="group" aria-label="결제수단">
-              <button type="button" data-m="카드" aria-pressed="true">카드</button>
-              <button type="button" data-m="지역화폐" aria-pressed="false">지역화폐</button>
-              <button type="button" data-m="현금" aria-pressed="false">현금</button>
+              <button type="button" data-m="하나카드" aria-pressed="true">하나카드</button>
+              <button type="button" data-m="토스뱅크" aria-pressed="false">토스뱅크</button>
+              <button type="button" data-m="우리은행" aria-pressed="false">우리은행</button>
+              <button type="button" data-m="기업은행" aria-pressed="false">기업은행</button>
             </div>
+            <input class="field" id="fMethodCustom" placeholder="결제수단 직접 입력 (예: 현금, 지역화폐)" aria-label="결제수단 직접 입력">
             <input class="field" id="fMemo" placeholder="메모 (선택)" aria-label="메모">
             <div class="row">
               <button class="btn" id="fSubmit" type="submit">결재 올리기</button>
@@ -196,7 +198,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=9"></script>
-<script src="app.js?v=9"></script>
+<script src="config.js?v=10"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>

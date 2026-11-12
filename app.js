@@ -125,7 +125,8 @@ function renderPlaces(){const box=$('fPlaces');box.textContent='';const cur=$('f
 $('fPlace').addEventListener('input',renderPlaces);
 
 /* ---------- state for form ---------- */
-let selDept='food',method='카드',editId=null;
+const METHODS=['하나카드','토스뱅크','우리은행','기업은행'];
+let selDept='food',method=METHODS[0],editId=null;
 
 /* ---------- render ---------- */
 function setBar(el,ratio,label,warnAt=.8){el.classList.toggle('over',ratio>1);el.classList.toggle('warn',ratio>=warnAt&&ratio<=1);el.querySelector('i').style.width=Math.min(100,ratio*100)+'%';el.querySelector('span').textContent=label}
@@ -186,7 +187,7 @@ function render(){
   const H=$('hist');H.textContent='';const hr=document.createElement('tr');for(const h of['기간','받은 돈','고정비','변동비','남은 돈'])hr.appendChild(Object.assign(document.createElement('th'),{textContent:h}));H.appendChild(hr);
   for(const m of monthsList().reverse()){const tr=document.createElement('tr');const sp=surplus(m);for(const [v,c] of [[`${periodLabel(m,true)}${m===ym?' (진행 중)':''}`],[won(S.months[m]?.received||0)],[won(-fxTotal())],[won(-spentOf(m))],[won(sp),sp<0?'neg':'pos']]){const td=document.createElement('td');td.textContent=v;if(c)td.className=c;tr.appendChild(td)}H.appendChild(tr)}
   drawSafe();
-  $('fMethod').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===method)));
+  $('fMethod').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(!$('fMethodCustom').value.trim()&&b.dataset.m===method)));
   if(role==='boss')renderBoss();
   renderPlaces();
   drawScene();
@@ -266,9 +267,10 @@ try{const t=localStorage.getItem('uri-tab');if(t)go(t)}catch(e){}
 const num=v=>parseInt(String(v).replace(/[^0-9]/g,''),10)||0;
 for(const id of['fAmt','recvIn'])$(id).addEventListener('input',e=>{const n=num(e.target.value);e.target.value=n?n.toLocaleString('ko-KR'):''});
 $('fDate').value=today;
-$('fMethod').onclick=e=>{const m=e.target.dataset?.m;if(m){method=m;render()}};
-function startEdit(e){editId=e.id;selDept=e.cat;method=e.method;$('fDate').value=e.date;$('fPlace').value=e.place;$('fAmt').value=e.amount.toLocaleString('ko-KR');$('fMemo').value=e.memo||'';$('formTitle').textContent='품의서 수정';$('fSubmit').textContent='수정 결재';$('fCancel').hidden=false;go('var');render();$('fAmt').focus()}
-function endEdit(){editId=null;$('form').reset();$('fDate').value=today;$('formTitle').textContent='품의서 작성';$('fSubmit').textContent='결재 올리기';$('fCancel').hidden=true}
+$('fMethod').onclick=e=>{const m=e.target.dataset?.m;if(m){method=m;$('fMethodCustom').value='';render()}};
+$('fMethodCustom').addEventListener('input',e=>{const v=e.target.value.trim();method=v||METHODS[0];$('fMethod').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(!v&&b.dataset.m===method)))});
+function startEdit(e){editId=e.id;selDept=e.cat;method=e.method;$('fMethodCustom').value=METHODS.includes(e.method)?'':e.method;$('fDate').value=e.date;$('fPlace').value=e.place;$('fAmt').value=e.amount.toLocaleString('ko-KR');$('fMemo').value=e.memo||'';$('formTitle').textContent='품의서 수정';$('fSubmit').textContent='수정 결재';$('fCancel').hidden=false;go('var');render();$('fAmt').focus()}
+function endEdit(){editId=null;$('form').reset();method=METHODS[0];$('fDate').value=today;$('formTitle').textContent='품의서 작성';$('fSubmit').textContent='결재 올리기';$('fCancel').hidden=true}
 $('fCancel').onclick=()=>{endEdit();render()};
 $('form').onsubmit=e=>{e.preventDefault();const amount=num($('fAmt').value);if(!amount){toast('금액을 입력해주세요');$('fAmt').focus();return}
   const rec={cat:selDept,place:$('fPlace').value.trim().slice(0,40),amount,method,memo:$('fMemo').value.trim().slice(0,60),date:$('fDate').value||today};
