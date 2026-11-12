@@ -298,8 +298,8 @@ async function pinKey(k){if(k==='⌫'){pinBuf=pinBuf.slice(0,-1);drawDots();retu
   if(pinMode==='set'){pinFirst=v;pinView('confirm');return}
   if(pinMode==='confirm'){if(v===pinFirst){setPin(await sha(userEmail+':'+v));play('stamp');enterApp()}else{shake();$('lkErr').textContent='두 번 입력한 PIN이 달라요. 다시 정해주세요';pinView('set')}return}
   if(await sha(userEmail+':'+v)===getPin()){pinFails=0;play('coin');enterApp()}
-  else{pinFails++;shake();pinBuf='';drawDots();if(pinFails>=5){setPin(null);await sb.auth.signOut();showLock('login','PIN을 5번 틀려서 다시 로그인해야 해요')}else $('lkErr').textContent=`PIN이 맞지 않아요 (${pinFails}/5)`}}
-$('forgot').onclick=async()=>{setPin(null);await sb.auth.signOut();showLock('login')};
+  else{pinFails++;shake();pinBuf='';drawDots();if(pinFails>=5){setPin(null);await sb.auth.signOut({scope:'local'});showLock('login','PIN을 5번 틀려서 다시 로그인해야 해요')}else $('lkErr').textContent=`PIN이 맞지 않아요 (${pinFails}/5)`}}
+$('forgot').onclick=async()=>{setPin(null);await sb.auth.signOut({scope:'local'});showLock('login')};
 $('loginForm').onsubmit=async e=>{e.preventDefault();$('lkGo').disabled=true;$('lkErr').textContent='';
   const {data,error}=await sb.auth.signInWithPassword({email:$('lkEmail').value.trim(),password:$('lkPw').value});
   $('lkGo').disabled=false;
@@ -307,17 +307,17 @@ $('loginForm').onsubmit=async e=>{e.preventDefault();$('lkGo').disabled=true;$('
     $('lkErr').textContent=/invalid login/i.test(m)?'이메일이나 비밀번호가 맞지 않아요':/not confirmed/i.test(m)?'이메일 인증이 안 된 계정이에요. Supabase Users에서 계정을 확인(Confirm)해주세요':/api key|apikey|jwt/i.test(m)?'앱 설정 키가 맞지 않아요 ('+m+')':'로그인 오류: '+m;return}
   userEmail=data.user.email;$('lkPw').value='';
   const {data:mem,error:memErr}=await sb.from('members').select('email');
-  if(memErr){console.error(memErr);await sb.auth.signOut();showLock('login','데이터 통로에 연결하지 못했어요. Supabase에서 Data API가 켜져 있는지 확인해주세요 ('+(memErr.message||memErr.code||'')+')');return}
-  if(!mem||!mem.length){await sb.auth.signOut();showLock('login','이 계정은 사원 명부에 없어요. Supabase의 members 표에 이메일을 넣어주세요');return}
-  pinView('set')};
+  if(memErr){console.error(memErr);await sb.auth.signOut({scope:'local'});showLock('login','데이터 통로에 연결하지 못했어요. Supabase에서 Data API가 켜져 있는지 확인해주세요 ('+(memErr.message||memErr.code||'')+')');return}
+  if(!mem||!mem.length){await sb.auth.signOut({scope:'local'});showLock('login','이 계정은 사원 명부에 없어요. Supabase의 members 표에 이메일을 넣어주세요');return}
+  if(getPin()){enterApp()}else pinView('set')};
 async function enterApp(){$('lkErr').textContent='';try{localStorage.setItem(SEEN_KEY,String(Date.now()))}catch(e){}
-  try{await loadAll()}catch(e){console.error(e);const m=String(e&&(e.message||e.code)||'');if(/session|jwt|refresh|token/i.test(m)){setPin(null);showLock('login','로그인 기간이 끝나서 다시 로그인해야 해요');}else showLock('pin','데이터를 불러오지 못했어요. 인터넷 연결을 확인하고 PIN을 다시 눌러주세요');return}
+  try{await loadAll()}catch(e){console.error(e);const m=String(e&&(e.message||e.code)||'');if(/session|jwt|refresh|token/i.test(m)){showLock('login','로그인이 풀렸어요. 다시 로그인해주세요 (PIN은 그대로예요)');}else showLock('pin','데이터를 불러오지 못했어요. 인터넷 연결을 확인하고 PIN을 다시 눌러주세요');return}
   $('lock').hidden=true;$('app').hidden=false;$('who').textContent=userEmail;subscribe();setRole(role);
   {const sc=$('scene');if(sc.scrollWidth>sc.clientWidth)sc.scrollLeft=(sc.scrollWidth-sc.clientWidth)*0.35}}
 function lockNow(){if(!$('app').hidden){pinView('enter')}}
 $('lockNow').onclick=lockNow;
 $('changePin').onclick=()=>pinView('set');
-$('logout').onclick=async()=>{setPin(null);await sb.auth.signOut();showLock('login')};
+$('logout').onclick=async()=>{setPin(null);await sb.auth.signOut({scope:'local'});showLock('login')};
 /* ---------- PWA: offline shell + install ---------- */
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
 let installEvt=null;
@@ -326,6 +326,7 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=
 $('installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();const r=await installEvt.userChoice;if(r.outcome==='accepted'){toast('홈 화면에 설치했어요');$('installBtn').hidden=true}installEvt=null};
 window.addEventListener('appinstalled',()=>{$('installBtn').hidden=true});
 $('installHint').textContent=standalone?'앱으로 실행 중이에요.':/iphone|ipad|ipod/i.test(navigator.userAgent)?'아이폰: Safari 아래 공유 버튼 → "홈 화면에 추가"를 누르면 앱처럼 쓸 수 있어요.':'안드로이드: 크롬 메뉴(⋮) → "홈 화면에 추가" 또는 "앱 설치"를 누르면 앱처럼 쓸 수 있어요.';
+sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_OUT'&&!$('app').hidden){showLock('login','로그인이 풀렸어요. 다시 로그인해주세요 (PIN은 그대로예요)')}});
 let hiddenAt=0;
 document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now()}else{if(hiddenAt&&Date.now()-hiddenAt>5*60*1000)lockNow();else if(loaded)scheduleReload()}});
 (async()=>{
