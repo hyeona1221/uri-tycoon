@@ -114,6 +114,15 @@ function drawScene(){const left=(M(ym).received||0)-fxTotal()-spentOf(ym);const 
 function deptIcon(c,d){const x=c.getContext('2d');c.width=14;c.height=14;x.fillStyle='#000';x.fillRect(2,2,10,10);x.fillStyle=d.c;x.fillRect(3,3,8,8);x.fillStyle='rgba(255,255,255,.55)';x.fillRect(3,3,8,2);x.fillStyle='#fff';x.font='bold 7px monospace';x.fillText(String(DEPTS.indexOf(d)+1%10),DEPTS.indexOf(d)>=9?2:5,10)}
 function deptGrid(el,onPick,selected){el.textContent='';for(const d of DEPTS){const b=document.createElement('button');b.type='button';b.className='dept';b.setAttribute('aria-pressed',String(selected===d.id));const c=document.createElement('canvas');deptIcon(c,d);const t=document.createElement('b');t.textContent=d.n;b.title=`${d.n} [${d.team}]`;b.append(c,t);b.onclick=()=>onPick(d.id);el.appendChild(b)}}
 
+/* ---------- frequent places ---------- */
+const PLACES=['당근','쿠팡','마트','편의점','네이버쇼핑'];
+function renderPlaces(){const box=$('fPlaces');box.textContent='';const cur=$('fPlace').value.trim();
+  const freq={};for(const e of S.expenses){const p=(e.place||'').trim();if(p&&!PLACES.includes(p))freq[p]=(freq[p]||0)+1}
+  const recent=Object.entries(freq).filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([p])=>p);
+  for(const p of [...PLACES,...recent]){const b=document.createElement('button');b.type='button';b.textContent=p;if(!PLACES.includes(p))b.className='recent';b.setAttribute('aria-pressed',String(cur===p));
+    b.onclick=()=>{$('fPlace').value=cur===p?'':p;renderPlaces();if(!$('fAmt').value)$('fAmt').focus()};box.appendChild(b)}}
+$('fPlace').addEventListener('input',renderPlaces);
+
 /* ---------- state for form ---------- */
 let selDept='food',method='카드',editId=null;
 
@@ -178,6 +187,7 @@ function render(){
   drawSafe();
   $('fMethod').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===method)));
   if(role==='boss')renderBoss();
+  renderPlaces();
   drawScene();
 }
 function drawSafe(){const c=$('safeCv').getContext('2d');c.clearRect(0,0,40,40);c.fillStyle='#4b5262';c.fillRect(4,4,32,32);c.fillStyle='#6b7385';c.fillRect(6,6,28,28);c.fillStyle='#c9c9c9';c.fillRect(16,14,8,8);c.fillStyle='#888';c.fillRect(19,12,2,12);const n=Math.max(0,Math.min(12,Math.floor(vaultBefore(ym)/80000)));for(let i=0;i<n;i++){c.fillStyle='#f2b632';c.fillRect(8+(i%4)*6,32-Math.floor(i/4)*3,5,3)}}
