@@ -209,3 +209,12 @@ table.hist td{padding:6px 4px;border-bottom:1px solid #d3cab3;text-align:right;f
 .paydetail{padding:2px 0 8px 10px;border-bottom:2px dashed #cfc6b0}
 .paydetail .lrow{grid-template-columns:44px 12px 1fr auto}
 @media (max-width:760px){.tab{font-size:13px;padding:8px 1px}}
+
+.vform{margin-top:12px;padding:12px;border:2px dashed #000;border-radius:4px;background:#fffaf0}
+.vform>b{font-family:var(--hd);font-weight:400;font-size:18px}
+.vrow{display:grid;grid-template-columns:44px auto 1fr auto auto;gap:8px;align-items:center;padding:8px 2px;border-bottom:1px solid #d3cab3}
+.vrow .d{font-family:var(--px);font-size:17px;color:var(--muted)}
+.vrow .tag2{font-size:11px;font-weight:700;padding:1px 6px;border:2px solid #000;border-radius:3px;white-space:nowrap}
+.vrow .tag2.in{background:#dcefd9}.vrow .tag2.out{background:#f7dcd6}
+.vrow .t{min-width:0}.vrow .t b{display:block;font-weight:500;font-size:14px;overflow-wrap:anywhere}.vrow .t span{font-size:11px;color:var(--muted)}
+.vrow .a{font-family:var(--px);font-size:20px;white-space:nowrap}

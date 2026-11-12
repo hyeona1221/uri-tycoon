@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -185,7 +185,26 @@
         <section class="paper card">
           <h2>사내 유보금 (이월 금고)</h2>
           <div class="vault"><canvas id="safeCv" width="40" height="40" style="width:80px;height:80px;image-rendering:pixelated"></canvas>
-            <div><div class="big" id="vaultBig">0원</div><p class="hint">지난 기간까지 남은 돈이 쌓인 금액이에요. 한 달은 월급날 25일부터 다음 달 24일까지예요. 기간이 끝나면 남은 돈이 금고에 더해지고, 모자라면 금고에서 빠져요.</p></div></div>
+            <div><div class="big" id="vaultBig">0원</div><p class="hint">지난 기간까지 남은 돈 + 채운 돈 − 꺼낸 돈이에요. 기간(25일 ~ 다음 달 24일)이 끝나면 그 기간에 남은 돈이 금고에 더해지고, 모자라면 금고에서 빠져요.</p></div></div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="vOutBtn" type="button">금고에서 꺼내 쓰기</button>
+            <button class="btn blue" id="vInBtn" type="button">금고 채우기</button>
+          </div>
+          <form id="vForm" class="vform" hidden autocomplete="off">
+            <b id="vFormTitle"></b>
+            <input class="field amt" id="vAmt" inputmode="numeric" placeholder="금액" aria-label="금액">
+            <div class="seg" id="vKind" role="group" aria-label="어떤 돈인가요"></div>
+            <p class="hint" id="vKindHint"></p>
+            <div class="row">
+              <input class="field" id="vDate" type="date" aria-label="날짜">
+              <input class="field" id="vMemo" placeholder="메모 (예: 냉장고 구입, 축의금)" aria-label="메모">
+            </div>
+            <div class="row"><button class="btn" type="submit" id="vSave">기록하기</button><button class="btn gray" type="button" id="vCancel" style="flex:0 0 auto">취소</button></div>
+          </form>
+        </section>
+        <section class="paper card">
+          <h2>금고 입출금 내역 <small id="vCount"></small></h2>
+          <div class="ledger" id="vList"></div>
         </section>
         <section class="paper card">
           <h2>월별 정산</h2>
@@ -209,7 +228,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=11"></script>
-<script src="app.js?v=11"></script>
+<script src="config.js?v=12"></script>
+<script src="app.js?v=12"></script>
 </body>
 </html>
