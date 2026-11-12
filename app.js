@@ -120,6 +120,27 @@ function drawScene(){const left=(M(ym).received||0)-fxTotal()-spentOf(ym)+monthA
 function deptIcon(c,d){const x=c.getContext('2d');c.width=14;c.height=14;x.fillStyle='#000';x.fillRect(2,2,10,10);x.fillStyle=d.c;x.fillRect(3,3,8,8);x.fillStyle='rgba(255,255,255,.55)';x.fillRect(3,3,8,2);x.fillStyle='#fff';x.font='bold 7px monospace';x.fillText(String(DEPTS.indexOf(d)+1%10),DEPTS.indexOf(d)>=9?2:5,10)}
 function deptGrid(el,onPick,selected){el.textContent='';for(const d of DEPTS){const b=document.createElement('button');b.type='button';b.className='dept';b.setAttribute('aria-pressed',String(selected===d.id));const c=document.createElement('canvas');deptIcon(c,d);const t=document.createElement('b');t.textContent=d.n;b.title=`${d.n} [${d.team}]`;b.append(c,t);b.onclick=()=>onPick(d.id);el.appendChild(b)}}
 
+/* ---------- receipt scan (Claude via Supabase Edge Function) ---------- */
+function scanMsg(t,cls=''){const m=$('scanMsg');m.hidden=!t;m.textContent=t||'';m.className='scanmsg '+cls}
+function shrink(file){return new Promise((res,rej)=>{const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{const max=1568,s=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',.85).split(',')[1])};img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('image'))};img.src=url})}
+const SCAN_ERR={not_receipt:'영수증으로 보이지 않아요. 영수증이 화면에 꽉 차게 다시 찍어주세요.',not_member:'로그인이 풀렸어요. 다시 로그인해주세요.',api_key:'영수증 읽기 설정(API 키)이 아직 안 됐어요.',rate_limited:'잠시 후 다시 시도해주세요.',refused:'이 사진은 읽을 수 없어요. 다른 사진으로 해주세요.',bad_image:'사진이 너무 커요. 다시 찍어주세요.'};
+async function scanFile(file){if(!file)return;scanMsg('영수증을 읽는 중이에요… (5초 정도)','busy');
+  try{const image=await shrink(file);
+    const {data,error}=await sb.functions.invoke('receipt',{body:{image,media_type:'image/jpeg',today}});
+    if(error){let code='';try{code=(await error.context.json()).error}catch(_){}
+      if(!code&&/not found|404/i.test(String(error.message)+String(error.context?.status)))throw new Error('영수증 읽기 기능이 아직 서버에 올라가지 않았어요.');
+      throw new Error(SCAN_ERR[code]||'영수증을 읽지 못했어요. 다시 시도해주세요.')}
+    if(data.date&&/^\d{4}-\d{2}-\d{2}$/.test(data.date))$('fDate').value=data.date;
+    if(data.place)$('fPlace').value=data.place;
+    if(data.amount>0)$('fAmt').value=Number(data.amount).toLocaleString('ko-KR');
+    if(DEPTS.some(d=>d.id===data.category))selDept=data.category;
+    if(data.method){if(METHODS.includes(data.method)){method=data.method;$('fMethodCustom').value=''}else{$('fMethodCustom').value=data.method;method=data.method}}
+    if(data.memo)$('fMemo').value=data.memo;
+    render();for(const id of['fDate','fPlace','fAmt','fMemo']){const el=$(id);el.classList.remove('filled');void el.offsetWidth;el.classList.add('filled')}
+    play('coin');scanMsg('영수증을 읽었어요. 내용을 확인하고 [결재 올리기]를 눌러주세요.')}
+  catch(e){console.error(e);scanMsg(e.message&&!/image/.test(e.message)?e.message:'사진을 열지 못했어요. 다시 시도해주세요.','err')}}
+for(const id of['scanCam','scanPick'])$(id).addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';scanFile(f)});
+
 /* ---------- frequent places ---------- */
 const PLACES=['당근','쿠팡','마트','편의점','네이버쇼핑'];
 function renderPlaces(){const box=$('fPlaces');box.textContent='';const cur=$('fPlace').value.trim();
@@ -368,7 +389,7 @@ $('fDate').value=today;
 $('fMethod').onclick=e=>{const m=e.target.dataset?.m;if(m){method=m;$('fMethodCustom').value='';render()}};
 $('fMethodCustom').addEventListener('input',e=>{const v=e.target.value.trim();method=v||METHODS[0];$('fMethod').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(!v&&b.dataset.m===method)))});
 function startEdit(e){editId=e.id;selDept=e.cat;method=e.method;$('fMethodCustom').value=METHODS.includes(e.method)?'':e.method;$('fDate').value=e.date;$('fPlace').value=e.place;$('fAmt').value=e.amount.toLocaleString('ko-KR');$('fMemo').value=e.memo||'';$('formTitle').textContent='품의서 수정';$('fSubmit').textContent='수정 결재';$('fCancel').hidden=false;go('var');render();$('fAmt').focus()}
-function endEdit(){editId=null;$('form').reset();method=METHODS[0];$('fDate').value=today;$('formTitle').textContent='품의서 작성';$('fSubmit').textContent='결재 올리기';$('fCancel').hidden=true}
+function endEdit(){scanMsg('');editId=null;$('form').reset();method=METHODS[0];$('fDate').value=today;$('formTitle').textContent='품의서 작성';$('fSubmit').textContent='결재 올리기';$('fCancel').hidden=true}
 $('fCancel').onclick=()=>{endEdit();render()};
 $('form').onsubmit=e=>{e.preventDefault();const amount=num($('fAmt').value);if(!amount){toast('금액을 입력해주세요');$('fAmt').focus();return}
   const rec={cat:selDept,place:$('fPlace').value.trim().slice(0,40),amount,method,memo:$('fMemo').value.trim().slice(0,60),date:$('fDate').value||today};

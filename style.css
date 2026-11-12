@@ -241,3 +241,11 @@ table.hist td{padding:6px 4px;border-bottom:1px solid #d3cab3;text-align:right;f
 .report .kpi{border:1px solid #ccc;border-radius:4px;padding:6px 10px}
 .report .kpi span{color:#666;font-size:11px;display:block}.report .kpi b{font-size:18px}
 .report .neg{color:#c0392b}.report .pos{color:#2f7d2b}
+
+.scan{display:flex;gap:8px}.scanbtn{flex:1;text-align:center;font-size:16px;padding:8px;cursor:pointer}
+.scanmsg{margin:0;padding:8px 10px;border:2px dashed #000;border-radius:4px;background:#eef4ff;font-size:13px}
+.scanmsg.err{background:#fde8e4}
+.scanmsg.busy::before{content:"";display:inline-block;width:10px;height:10px;margin-right:8px;background:var(--blue);animation:blink .6s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.filled{animation:flash 1.2s ease-out}
+@keyframes flash{0%{background:#fff3c4}100%{background:#fff}}
