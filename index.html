@@ -64,7 +64,33 @@
     </div>
   </section>
 
-  <div class="main">
+  <div class="roles frame" role="tablist" aria-label="누구의 화면">
+    <button class="role" role="tab" data-r="wife" aria-selected="true">아내탭 (사원)</button>
+    <button class="role" role="tab" data-r="boss" aria-selected="false">남편탭 (대표이사)</button>
+  </div>
+
+  <div class="bossview" id="bossView" hidden>
+    <section class="paper card">
+      <h2>수입 (+) <small id="bPeriod"></small></h2>
+      <div class="inc" id="bIncome"></div>
+      <div class="kv" style="margin-top:8px"><div class="t">수입 합계</div><div class="v t" id="bIncTotal">0원</div></div>
+    </section>
+    <section class="paper card">
+      <h2>사전 공제 (−) <small id="bDedCount"></small></h2>
+      <div class="pbar" id="bDedBar"><i></i><span></span></div>
+      <div class="fx" id="bDed" style="margin-top:6px"></div>
+      <p class="hint">입금 후 처리할 때마다 눌러서 결재 도장을 찍어요. 급여에서 미리 빠지는 대출금은 여기 없어요.</p>
+    </section>
+    <section class="paper card sendcard">
+      <h2>아내에게 보낼 생활비</h2>
+      <div class="sendcalc px" id="bCalc"></div>
+      <div class="sendbig px" id="bSend">0원</div>
+      <button class="fxrow sendrow" id="bSendBtn" type="button"></button>
+      <p class="hint" id="bSendHint"></p>
+    </section>
+  </div>
+
+  <div class="main" id="wifeMain">
     <nav class="frame side" role="tablist" aria-label="메뉴">
       <button class="tab" role="tab" data-v="office" aria-selected="true">사무실</button>
       <button class="tab" role="tab" data-v="fixed" aria-selected="false">고정비 결재</button>

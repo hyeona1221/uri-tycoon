@@ -109,7 +109,7 @@ function babyHappy(msg){clearTimeout(babyT);babyPose('sit');floatText(msg,'47','
 $('babyBtn').onclick=()=>babyHappy(babyRest()==='sleep'?'찬솔: 응애… (졸려)':'찬솔: 까르르!');
 babyPose(babyRest());
 ['assets/choa_lie.png','assets/choa_sit.png','assets/chansol_sit.png','assets/chansol_crawl.png','assets/chansol_sleep.png'].forEach(src=>{const i=new Image();i.src=src});
-function drawScene(){const left=(M(ym).received||0)-fxTotal()-spentOf(ym);const bo=$('bossBub');bo.textContent='';const bb=document.createElement('div');bo.appendChild(bb);const lines=left>=0?['이번 달 남은 돈',won(left)+'!','아껴 쓰자!']:['이번 달',won(-left)+' 초과!','금고에서 채우자!'];lines.forEach((t,i)=>{if(i)bb.appendChild(document.createElement('br'));const sp=document.createElement('span');sp.textContent=t;if(i===1){sp.style.color=left>=0?'#2f7d2b':'#d2402f';sp.style.fontSize='1.15em'}bb.appendChild(sp)});$('vaultTag').textContent=Math.round(vaultBefore(ym)/10000).toLocaleString('ko-KR')+'만원'}
+function drawScene(){const left=(M(ym).received||0)-fxTotal()-spentOf(ym);const bo=$('bossBub');bo.textContent='';bo.classList.toggle('grow',role==='boss');const bb=document.createElement('div');bo.appendChild(bb);const lines=role==='boss'?bossLines():left>=0?['이번 달 남은 돈',won(left)+'!','아껴 쓰자!']:['이번 달',won(-left)+' 초과!','금고에서 채우자!'];lines.forEach((t,i)=>{if(i)bb.appendChild(document.createElement('br'));const sp=document.createElement('span');sp.textContent=t;if(i===1){sp.style.color=role==='boss'?'#284f91':left>=0?'#2f7d2b':'#d2402f';sp.style.fontSize='1.15em'}bb.appendChild(sp)});$('vaultTag').textContent=Math.round(vaultBefore(ym)/10000).toLocaleString('ko-KR')+'만원'}
 /* ---------- dept icons ---------- */
 function deptIcon(c,d){const x=c.getContext('2d');c.width=14;c.height=14;x.fillStyle='#000';x.fillRect(2,2,10,10);x.fillStyle=d.c;x.fillRect(3,3,8,8);x.fillStyle='rgba(255,255,255,.55)';x.fillRect(3,3,8,2);x.fillStyle='#fff';x.font='bold 7px monospace';x.fillText(String(DEPTS.indexOf(d)+1%10),DEPTS.indexOf(d)>=9?2:5,10)}
 function deptGrid(el,onPick,selected){el.textContent='';for(const d of DEPTS){const b=document.createElement('button');b.type='button';b.className='dept';b.setAttribute('aria-pressed',String(selected===d.id));const c=document.createElement('canvas');deptIcon(c,d);const t=document.createElement('b');t.textContent=d.n;b.title=`${d.n} [${d.team}]`;b.append(c,t);b.onclick=()=>onPick(d.id);el.appendChild(b)}}
@@ -131,7 +131,7 @@ function fxRows(el){
     el.appendChild(b)}
 }
 function renderHud(){
-  const xp=S.expenses.length+Object.values(S.months).reduce((s,m)=>s+Object.values(m.paid||{}).filter(Boolean).length,0)+S.noSpend.length*3;
+  const xp=S.expenses.length+Object.values(S.months).reduce((s,m)=>s+Object.entries(m.paid||{}).filter(([k,v])=>k!=='h'&&v===true).length,0)+S.noSpend.length*3;
   $('lv').textContent=Math.floor(xp/20)+1;const xb=$('xp');xb.textContent='';for(let i=0;i<10;i++){const k=document.createElement('i');if(i<Math.floor((xp%20)/2))k.className='on';xb.appendChild(k)}
   const spent=spentOf(ym),[pa,pb]=periodRange(ym),total=Math.round((pb-pa)/864e5)+1,elapsed=Math.max(1,Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-pa)/864e5)+1);const pace=(spent/TARGET_MAX)/(elapsed/total);
   const st=pace<=.9?['good','양호 (잘 아끼고 있어요)']:pace<=1.1?['mid','보통 (페이스 유지!)']:['bad','주의 (예산 관리가 시급합니다!)'];
@@ -177,9 +177,73 @@ function render(){
   for(const m of monthsList().reverse()){const tr=document.createElement('tr');const sp=surplus(m);for(const [v,c] of [[`${periodLabel(m,true)}${m===ym?' (진행 중)':''}`],[won(S.months[m]?.received||0)],[won(-fxTotal())],[won(-spentOf(m))],[won(sp),sp<0?'neg':'pos']]){const td=document.createElement('td');td.textContent=v;if(c)td.className=c;tr.appendChild(td)}H.appendChild(tr)}
   drawSafe();
   $('fMethod').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===method)));
+  if(role==='boss')renderBoss();
   drawScene();
 }
 function drawSafe(){const c=$('safeCv').getContext('2d');c.clearRect(0,0,40,40);c.fillStyle='#4b5262';c.fillRect(4,4,32,32);c.fillStyle='#6b7385';c.fillRect(6,6,28,28);c.fillStyle='#c9c9c9';c.fillRect(16,14,8,8);c.fillStyle='#888';c.fillRect(19,12,2,12);const n=Math.max(0,Math.min(12,Math.floor(vaultBefore(ym)/80000)));for(let i=0;i<n;i++){c.fillStyle='#f2b632';c.fillRect(8+(i%4)*6,32-Math.floor(i/4)*3,5,3)}}
+
+/* ---------- husband tab (대표이사) ---------- */
+const H_DED=[{id:'loan',n:'대출금',a:489101},{id:'mgmt',n:'관리비예산',a:300000},{id:'pocket',n:'남편용돈',a:300000},{id:'auto',n:'자동이체',a:1205793}];
+const H_DED_TOTAL=H_DED.reduce((s,d)=>s+d.a,0);
+let role='wife';try{role=localStorage.getItem('uri-role')||'wife'}catch(e){}
+const H=()=>{const p=M(ym).paid||(M(ym).paid={});return p.h||(p.h={salary:0,bonus:0,salaryOk:false,bonusOk:false,ded:{},sent:false})};
+const hIncome=()=>{const h=H();return (h.salary||0)+(h.bonus||0)};
+const hSend=()=>hIncome()-H_DED_TOTAL;
+function bossLines(){const h=H();
+  if(h.sent)return ['생활비 보냈다!',won(h.sentAmount||0),'이번 달도 화이팅!'];
+  if(h.salaryOk&&h.bonusOk)return ['이번 달 급여랑 상여금','입력 완료!','공제하고 보낸다!'];
+  return ['이번 달 급여랑','상여금 확인 중…','조금만 기다려!']}
+function setRole(r){role=r;try{localStorage.setItem('uri-role',r)}catch(e){}
+  document.querySelectorAll('.role').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.r===r)));
+  $('bossView').hidden=r!=='boss';$('wifeMain').hidden=r==='boss';render();{const sc=$('scene');if(sc.scrollWidth>sc.clientWidth)sc.scrollTo({left:(sc.scrollWidth-sc.clientWidth)*(r==='boss'?1:0.35),behavior:'smooth'})}}
+document.querySelectorAll('.role').forEach(b=>b.onclick=()=>setRole(b.dataset.r));
+let hSaveT=0;const hSaveSoon=()=>{clearTimeout(hSaveT);hSaveT=setTimeout(()=>saveMonth(ym),600)};
+function renderBoss(){
+  const h=H();$('bPeriod').textContent=periodLabel(ym);
+  // income rows
+  const inc=$('bIncome');
+  if(!inc.children.length){
+    for(const [key,ok,label] of [['salary','salaryOk','20일 급여'],['bonus','bonusOk','25일 상여금']]){
+      const row=document.createElement('div');row.className='incrow';row.dataset.k=key;
+      const box=document.createElement('button');box.type='button';box.className='box';box.setAttribute('aria-label',label+' 입금 확인');
+      const nm=document.createElement('span');nm.className='nm';nm.textContent=label;
+      const inp=document.createElement('input');inp.className='field';inp.inputMode='numeric';inp.placeholder='금액';inp.id='hin-'+key;inp.setAttribute('aria-label',label+' 금액');
+      const st=document.createElement('span');st.className='stamp';
+      inp.addEventListener('input',()=>{const n=num(inp.value);inp.value=n?n.toLocaleString('ko-KR'):'';H()[key]=n;hSaveSoon();renderBossNumbers()});
+      box.onclick=()=>{const hh=H();hh[ok]=!hh[ok];saveMonth(ym);if(hh[ok])play('stamp');render()};
+      row.append(box,nm,inp,st);inc.appendChild(row)}}
+  for(const row of inc.children){const key=row.dataset.k,ok=key+'Ok',on=!!h[ok];row.classList.toggle('done',on);row.querySelector('.box').textContent=on?'✓':'';row.querySelector('.stamp').textContent=on?'입금 확인':'입금 대기';
+    const inp=row.querySelector('input');if(document.activeElement!==inp)inp.value=h[key]?h[key].toLocaleString('ko-KR'):''}
+  // deductions
+  const ded=$('bDed');ded.textContent='';const done=H_DED.filter(d=>h.ded?.[d.id]).length;
+  for(const d of H_DED){const on=!!h.ded?.[d.id];const b=document.createElement('button');b.type='button';b.className='fxrow'+(on?' done':'');
+    const box=document.createElement('span');box.className='box';box.textContent=on?'✓':'';
+    const nm=document.createElement('span');nm.className='nm';nm.textContent=d.n;
+    const am=document.createElement('span');am.className='am';am.textContent=d.a.toLocaleString('ko-KR');
+    const st=document.createElement('span');st.className='stamp';st.textContent=on?'결재 완료':'결재 대기';
+    b.append(box,nm,am,st);b.setAttribute('aria-pressed',String(on));
+    b.onclick=()=>{const hh=H();hh.ded={...(hh.ded||{}),[d.id]:!hh.ded?.[d.id]};saveMonth(ym);if(hh.ded[d.id]){play('stamp');if(H_DED.every(x=>hh.ded[x.id])){setTimeout(()=>play('fanfare'),250);toast('사전 공제 올 클리어!')}}render()};
+    ded.appendChild(b)}
+  $('bDedCount').textContent=`${done}/${H_DED.length} 완료 · ${won(H_DED_TOTAL)}`;setBar($('bDedBar'),done/H_DED.length,`${done}/${H_DED.length} 완료`,2);
+  renderBossNumbers();
+}
+function renderBossNumbers(){
+  const h=H(),inc=hIncome(),send=hSend();
+  $('bIncTotal').textContent=won(inc);
+  $('bCalc').textContent=`${won(inc)} − 공제 ${won(H_DED_TOTAL)} =`;
+  const big=$('bSend');big.textContent=won(send);big.classList.toggle('neg',send<0);
+  const b=$('bSendBtn');b.className='fxrow sendrow'+(h.sent?' done':'');b.textContent='';
+  const box=document.createElement('span');box.className='box';box.textContent=h.sent?'✓':'';
+  const nm=document.createElement('span');nm.className='nm';nm.textContent=h.sent?`아내에게 보낸 생활비 ${won(h.sentAmount||0)}`:'아내에게 보낼 생활비 이체';
+  const am=document.createElement('span');am.className='am';am.textContent='';
+  const st=document.createElement('span');st.className='stamp';st.textContent=h.sent?'이월 완료':'이체 대기';
+  b.append(box,nm,am,st);b.disabled=!h.sent&&send<=0;
+  $('bSendHint').textContent=h.sent?'아내탭의 "이번 달 받은 돈"에 반영됐어요. 다시 누르면 이체를 취소해요.':send<=0?'급여와 상여금을 입력하면 보낼 금액이 계산돼요.':'이체한 뒤 누르면 아내탭의 이번 달 받은 돈으로 자동 반영돼요.';
+}
+$('bSendBtn').onclick=()=>{const h=H(),m=M(ym);
+  if(!h.sent){const amt=hSend();if(amt<=0)return;h.prevReceived=m.received||0;h.sent=true;h.sentAmount=amt;h.sentAt=new Date().toISOString();m.received=amt;play('coin');setTimeout(()=>play('fanfare'),250);toast(`생활비 ${won(amt)} 이월 완료!`)}
+  else{m.received=(m.received===h.sentAmount)?(h.prevReceived||0):m.received;h.sent=false;h.sentAmount=0;toast('이체를 취소했어요')}
+  saveMonth(ym);render()};
 
 /* ---------- tabs ---------- */
 function go(v){document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.v===v)));document.querySelectorAll('.view').forEach(x=>x.hidden=x.dataset.view!==v);try{localStorage.setItem('uri-tab',v)}catch(e){}}
@@ -236,7 +300,7 @@ $('loginForm').onsubmit=async e=>{e.preventDefault();$('lkGo').disabled=true;$('
   pinView('set')};
 async function enterApp(){$('lkErr').textContent='';try{localStorage.setItem(SEEN_KEY,String(Date.now()))}catch(e){}
   try{await loadAll()}catch(e){showLock('pin','데이터를 불러오지 못했어요. 인터넷 연결을 확인해주세요');return}
-  $('lock').hidden=true;$('app').hidden=false;$('who').textContent=userEmail;subscribe();render();
+  $('lock').hidden=true;$('app').hidden=false;$('who').textContent=userEmail;subscribe();setRole(role);
   {const sc=$('scene');if(sc.scrollWidth>sc.clientWidth)sc.scrollLeft=(sc.scrollWidth-sc.clientWidth)*0.35}}
 function lockNow(){if(!$('app').hidden){pinView('enter')}}
 $('lockNow').onclick=lockNow;

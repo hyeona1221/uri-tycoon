@@ -165,3 +165,26 @@ table.hist td{padding:6px 4px;border-bottom:1px solid #d3cab3;text-align:right;f
 .link{background:none;border:0;color:#9fb8e8;text-decoration:underline;font-size:13px}
 .lkerr{margin:0;min-height:1.2em;color:#ff8a77;font-size:13px}
 .syncdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px}
+
+/* role switch + boss tab */
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px}
+.role{background:var(--frame2);color:#f3efe4;border:3px solid var(--edge);border-radius:4px;padding:10px 6px;font-family:var(--hd);font-size:17px;box-shadow:inset 0 -3px 0 #23262f}
+.role[aria-selected="true"]{background:var(--gold);color:#1c1c1c;box-shadow:inset 0 -3px 0 var(--gold2)}
+.role[data-r="boss"][aria-selected="true"]{background:#3f74c9;color:#fff;box-shadow:inset 0 -3px 0 #284f91}
+.bossview{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start}
+.bossview .sendcard{grid-column:1/-1}
+.inc{display:flex;flex-direction:column}
+.incrow{display:grid;grid-template-columns:26px 1fr minmax(0,170px) auto;gap:8px;align-items:center;padding:8px 2px;border-bottom:2px dashed #cfc6b0}
+.incrow .chk{background:none;border:0;padding:0;display:contents}
+.incrow .nm{font-weight:500;font-size:14px}
+.incrow input{font-family:var(--px);font-size:22px;padding:4px 8px;text-align:right}
+.incrow.done .stamp{border-color:var(--blue);color:var(--blue);background:rgba(63,116,201,.08);animation:pop .25s ease-out}
+.sendcalc{font-size:18px;color:var(--muted);text-align:center;overflow-wrap:anywhere}
+.sendbig{font-size:52px;line-height:1.1;text-align:center;color:#2f7d2b;margin:4px 0 10px}
+.sendbig.neg{color:var(--red)}
+.sendrow{border:3px solid #000;border-radius:4px;background:#fff;padding:10px}
+.sendrow.done{background:#fff3c4}
+.sendrow.done .stamp{border-color:var(--gold2);color:var(--gold2);background:rgba(176,122,18,.1)}
+@media (max-width:760px){.bossview{grid-template-columns:1fr}.incrow{grid-template-columns:26px 1fr minmax(0,130px)}.incrow .stamp{grid-column:2/-1;justify-self:start}.sendbig{font-size:42px}}
+
+#bossBub.grow{height:auto;min-height:25%;width:auto;min-width:14.1%;max-width:22%;padding:.5em .8em!important;white-space:nowrap}

@@ -36,7 +36,7 @@ create table if not exists public.fixed_items (
 create table if not exists public.months (
   ym text primary key,             -- 예: 2026-12
   received integer not null default 0,
-  paid jsonb not null default '{}'::jsonb,   -- {"lgu": true, "claude": true, ...}
+  paid jsonb not null default '{}'::jsonb,   -- 아내 고정비 도장 {"lgu": true, ...} + 남편탭 기록 {"h": {salary, bonus, salaryOk, bonusOk, ded, sent, sentAmount}}
   updated_at timestamptz not null default now()
 );
 
