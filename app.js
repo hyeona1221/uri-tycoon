@@ -224,7 +224,8 @@ $('loginForm').onsubmit=async e=>{e.preventDefault();$('lkGo').disabled=true;$('
   if(error){const m=(error.message||'')+'';console.error(error);
     $('lkErr').textContent=/invalid login/i.test(m)?'이메일이나 비밀번호가 맞지 않아요':/not confirmed/i.test(m)?'이메일 인증이 안 된 계정이에요. Supabase Users에서 계정을 확인(Confirm)해주세요':/api key|apikey|jwt/i.test(m)?'앱 설정 키가 맞지 않아요 ('+m+')':'로그인 오류: '+m;return}
   userEmail=data.user.email;$('lkPw').value='';
-  const {data:mem}=await sb.from('members').select('email');
+  const {data:mem,error:memErr}=await sb.from('members').select('email');
+  if(memErr){console.error(memErr);await sb.auth.signOut();showLock('login','데이터 통로에 연결하지 못했어요. Supabase에서 Data API가 켜져 있는지 확인해주세요 ('+(memErr.message||memErr.code||'')+')');return}
   if(!mem||!mem.length){await sb.auth.signOut();showLock('login','이 계정은 사원 명부에 없어요. Supabase의 members 표에 이메일을 넣어주세요');return}
   pinView('set')};
 async function enterApp(){$('lkErr').textContent='';try{localStorage.setItem(SEEN_KEY,String(Date.now()))}catch(e){}
