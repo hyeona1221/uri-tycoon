@@ -139,6 +139,7 @@ async function scanFile(file){if(!file)return;scanMsg('영수증을 읽는 중�
     render();for(const id of['fDate','fPlace','fAmt','fMemo']){const el=$(id);el.classList.remove('filled');void el.offsetWidth;el.classList.add('filled')}
     play('coin');scanMsg('영수증을 읽었어요. 내용을 확인하고 [결재 올리기]를 눌러주세요.')}
   catch(e){console.error(e);scanMsg(e.message&&!/image/.test(e.message)?e.message:'사진을 열지 못했어요. 다시 시도해주세요.','err')}}
+$('scanBox').hidden=!CFG.receipt;
 for(const id of['scanCam','scanPick'])$(id).addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';scanFile(f)});
 
 /* ---------- frequent places ---------- */

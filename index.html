@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=14">
+<link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -142,7 +142,7 @@
           <div class="daily" data-daily style="margin-bottom:10px"></div>
           <h2 id="formTitle">품의서 작성</h2>
           <form id="form" autocomplete="off">
-            <div class="scan">
+            <div class="scan" id="scanBox" hidden>
               <label class="btn blue scanbtn"><input type="file" id="scanCam" accept="image/*" capture="environment" hidden>📷 영수증 찍기</label>
               <label class="btn gray scanbtn"><input type="file" id="scanPick" accept="image/*" hidden>🖼 사진에서 고르기</label>
             </div>
@@ -236,7 +236,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=14"></script>
-<script src="app.js?v=14"></script>
+<script src="config.js?v=15"></script>
+<script src="app.js?v=15"></script>
 </body>
 </html>
