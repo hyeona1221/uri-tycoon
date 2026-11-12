@@ -236,6 +236,14 @@ function lockNow(){if(!$('app').hidden){pinView('enter')}}
 $('lockNow').onclick=lockNow;
 $('changePin').onclick=()=>pinView('set');
 $('logout').onclick=async()=>{setPin(null);await sb.auth.signOut();showLock('login')};
+/* ---------- PWA: offline shell + install ---------- */
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+let installEvt=null;
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('installBtn').hidden=false});
+$('installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();const r=await installEvt.userChoice;if(r.outcome==='accepted'){toast('홈 화면에 설치했어요');$('installBtn').hidden=true}installEvt=null};
+window.addEventListener('appinstalled',()=>{$('installBtn').hidden=true});
+$('installHint').textContent=standalone?'앱으로 실행 중이에요.':/iphone|ipad|ipod/i.test(navigator.userAgent)?'아이폰: Safari 아래 공유 버튼 → "홈 화면에 추가"를 누르면 앱처럼 쓸 수 있어요.':'안드로이드: 크롬 메뉴(⋮) → "홈 화면에 추가" 또는 "앱 설치"를 누르면 앱처럼 쓸 수 있어요.';
 let hiddenAt=0;
 document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now()}else{if(hiddenAt&&Date.now()-hiddenAt>5*60*1000)lockNow();else if(loaded)scheduleReload()}});
 (async()=>{
