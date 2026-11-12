@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=12">
+<link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -46,6 +46,7 @@
     <div class="frame money">
       <span class="coin" aria-hidden="true"></span><span class="px" id="hudVault" title="이월 금고">0</span>
       <span class="gem" aria-hidden="true"></span><span class="px" id="hudGem" style="color:#7fe3ff" title="무지출 데이">0</span>
+      <button class="pdfbtn" id="pdfBtn" type="button" title="이번 기간 리포트를 PDF로 저장">📄 <span>PDF 리포트 저장</span></button>
     </div>
   </header>
 
@@ -109,6 +110,7 @@
         <section class="paper card">
           <h2>이번 달 변동비 <small id="oMonth"></small></h2>
           <div class="kv" id="oKv"></div>
+          <div class="daily" data-daily></div>
           <div class="pbar" id="oVarBar" style="margin:8px 0"><i></i><span></span></div>
           <div class="depts" id="oDepts"></div>
           <p class="hint">부서를 누르면 품의서 작성으로 바로 가요.</p>
@@ -137,6 +139,7 @@
       <!-- VARIABLE -->
       <div class="view" data-view="var" hidden>
         <section class="paper card">
+          <div class="daily" data-daily style="margin-bottom:10px"></div>
           <h2 id="formTitle">품의서 작성</h2>
           <form id="form" autocomplete="off">
             <div class="row">
@@ -228,7 +231,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=12"></script>
-<script src="app.js?v=12"></script>
+<script src="config.js?v=13"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>

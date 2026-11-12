@@ -194,10 +194,55 @@ function render(){
   drawSafe();
   $('fMethod').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(!$('fMethodCustom').value.trim()&&b.dataset.m===method)));
   if(role==='boss')renderBoss();
-  renderPlaces();renderPay();renderVault();
+  renderPlaces();renderPay();renderVault();renderDaily(avail);
   drawScene();
 }
 function drawSafe(){const c=$('safeCv').getContext('2d');c.clearRect(0,0,40,40);c.fillStyle='#4b5262';c.fillRect(4,4,32,32);c.fillStyle='#6b7385';c.fillRect(6,6,28,28);c.fillStyle='#c9c9c9';c.fillRect(16,14,8,8);c.fillStyle='#888';c.fillRect(19,12,2,12);const n=Math.max(0,Math.min(12,Math.floor(vaultNow()/80000)));for(let i=0;i<n;i++){c.fillStyle='#f2b632';c.fillRect(8+(i%4)*6,32-Math.floor(i/4)*3,5,3)}}
+
+/* ---------- daily recommended budget ---------- */
+function daysLeftInPeriod(){const [,end]=periodRange(ym);const t=new Date(now.getFullYear(),now.getMonth(),now.getDate());return Math.max(1,Math.round((end-t)/864e5)+1)}
+function renderDaily(avail){const todaySpent=S.expenses.filter(e=>e.date===today).reduce((s,e)=>s+e.amount,0);
+  const dl=daysLeftInPeriod(),pool=avail+todaySpent,per=Math.max(0,Math.floor(pool/dl/100)*100),left=per-todaySpent;
+  const [,end]=periodRange(ym);
+  for(const el of document.querySelectorAll('[data-daily]')){el.textContent='';
+    const l=document.createElement('span');l.className='l';l.textContent='오늘 하루 권장 예산';
+    const b=document.createElement('b');b.textContent=won(per);if(per<=0)b.className='zero';
+    const s=document.createElement('small');s.textContent=pool<=0?`남은 생활비가 없어요 · ${end.getMonth()+1}/${end.getDate()}까지 ${dl}일`:`${end.getMonth()+1}/${end.getDate()}까지 ${dl}일 남음 · 오늘 쓴 돈 ${won(todaySpent)} · ${left>=0?'오늘 남은 권장액 '+won(left):won(-left)+' 초과'}`;
+    el.append(l,b,s)}}
+
+/* ---------- PDF report ---------- */
+function loadScript(src){return new Promise((res,rej)=>{if(window.html2pdf)return res();const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function reportHTML(){
+  const recv=M(ym).received||0,ex=exOf(ym),spent=spentOf(ym),adj=monthAdj(ym),left=recv-fxTotal()-spent+adj,paid=M(ym).paid||{},h=paid.h||{};
+  const row=(cells,cls='')=>`<tr class="${cls}">${cells.map(([v,n])=>`<td class="${n?'n':''}">${v}</td>`).join('')}</tr>`;
+  const W=v=>esc(won(v));
+  let o=`<div class="report"><h1>우리집 자산관리(주) 월간 리포트</h1><div class="sub">${esc(periodLabel(ym))} · 작성 ${esc(new Date().toLocaleString('ko-KR'))}</div>`;
+  o+=`<div class="grid">${[['받은 돈',recv],['고정비',-fxTotal()],['변동비',-spent],...(adj?[[adj>0?'금고에서 보탬':'금고로 옮김',adj]]:[]),['이번 기간 남은 돈',left],['이월 금고 잔액',vaultNow()]].map(([k,v])=>`<div class="kpi"><span>${esc(k)}</span><b class="${v<0?'neg':''}">${W(v)}</b></div>`).join('')}<div class="kpi"><span>무지출 데이</span><b>${nsStats().count}일</b></div><div class="kpi"><span>결재 건수</span><b>${ex.length}건</b></div></div>`;
+  if(h.salary||h.bonus||h.extra){o+=`<h3>남편탭 (대표이사)</h3><table><tr><th>항목</th><th class="n">금액</th></tr>`;
+    for(const [k,lab] of H_INC)if(h[k])o+=row([[esc(lab)+(h[k+'Ok']?' (입금 확인)':'')],[W(h[k]),1]]);
+    o+=row([['사전 공제 합계'],[W(-H_DED_TOTAL),1]]);o+=row([['아내에게 보낸 생활비'+(h.sent?' (이월 완료)':' (미이체)')],[W(h.sent?h.sentAmount:hSend()),1]],'tot');o+='</table>'}
+  o+=`<h3>고정비 결재 현황</h3><table><tr><th>항목</th><th>일정</th><th>상태</th><th class="n">금액</th></tr>`;
+  for(const f of FIXED)o+=row([[esc(f.n)],[esc(f.w)],[paid[f.id]?'결재 완료':'<span class="neg">결재 대기</span>'],[W(f.a),1]]);
+  o+=row([['합계'],[''],[`${FIXED.filter(f=>paid[f.id]).length}/${FIXED.length}`],[W(fxTotal()),1]],'tot')+'</table>';
+  o+=`<h3>부서별 지출</h3><table><tr><th>부서</th><th class="n">건수</th><th class="n">비율</th><th class="n">금액</th></tr>`;
+  for(const d of DEPTS){const it=ex.filter(e=>e.cat===d.id);if(!it.length)continue;const v=it.reduce((s,e)=>s+e.amount,0);o+=row([[esc(d.n+' ['+d.team+']')],[it.length,1],[(spent?Math.round(v/spent*100):0)+'%',1],[W(v),1]])}
+  o+=row([['합계'],[ex.length,1],['100%',1],[W(spent),1]],'tot')+'</table>';
+  const g={};for(const e of ex){const k=(e.method||'기타').trim()||'기타';g[k]=(g[k]||0)+e.amount}
+  o+=`<h3>결제수단별</h3><table><tr><th>결제수단</th><th class="n">금액</th></tr>`+Object.entries(g).sort((a,b)=>b[1]-a[1]).map(([k,v])=>row([[esc(k)],[W(v),1]])).join('')+'</table>';
+  const mv=allMoves().filter(x=>x.p===ym);
+  if(mv.length){o+=`<h3>금고 입출금</h3><table><tr><th>날짜</th><th>구분</th><th>메모</th><th class="n">금액</th></tr>`+mv.map(x=>row([[esc(x.date)],[x.type==='out'?'꺼냄':'채움'],[esc(x.memo)],[(x.type==='out'?'-':'+')+esc(x.amount.toLocaleString('ko-KR')),1]])).join('')+'</table>'}
+  o+=`<h3>결재 장부</h3><table><tr><th>날짜</th><th>사용처</th><th>부서</th><th>결제수단</th><th>메모</th><th class="n">금액</th></tr>`;
+  for(const e of [...ex].sort((a,b)=>a.date.localeCompare(b.date))){const d=DEPTS.find(x=>x.id===e.cat)||DEPTS[9];o+=row([[esc(e.date.slice(5))],[esc(e.place)],[esc(d.n)],[esc(e.method)],[esc(e.memo)],[esc(e.amount.toLocaleString('ko-KR')),1]])}
+  return o+'</table></div>'}
+$('pdfBtn').onclick=async()=>{const b=$('pdfBtn');b.disabled=true;toast('리포트를 만들고 있어요…');
+  try{await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+    const wrap=document.createElement('div');wrap.style.cssText='position:fixed;left:-10000px;top:0';wrap.innerHTML=reportHTML();document.body.appendChild(wrap);
+    const [a]=periodRange(ym);const name=`우리집가계부_${a.getFullYear()}-${pad(a.getMonth()+1)}-25_기간.pdf`;
+    await window.html2pdf().set({margin:[8,8,8,8],filename:name,image:{type:'jpeg',quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','.kpi']}}).from(wrap.firstElementChild).save();
+    wrap.remove();play('stamp');toast('PDF 리포트를 저장했어요')}
+  catch(e){console.error(e);toast('PDF를 만들지 못했어요. 인터넷 연결을 확인해주세요')}
+  finally{b.disabled=false}};
 
 /* ---------- vault in/out ---------- */
 let vType='out',vMonth=true;
