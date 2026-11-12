@@ -95,7 +95,7 @@
       <!-- FIXED -->
       <div class="view" data-view="fixed" hidden>
         <section class="paper card">
-          <h2>이번 달 받은 돈 <small>남편이 보낸 돈</small></h2>
+          <h2>이번 달 받은 돈 <small id="recvPeriod">남편이 보낸 돈</small></h2>
           <div class="row"><input class="field amt" id="recvIn" inputmode="numeric" placeholder="0" aria-label="받은 돈"><button class="btn" id="recvSave" type="button" style="flex:0 0 auto">저장</button></div>
           <div class="kv" id="fKv" style="margin-top:10px"></div>
         </section>
@@ -145,12 +145,12 @@
         <section class="paper card">
           <h2>사내 유보금 (이월 금고)</h2>
           <div class="vault"><canvas id="safeCv" width="40" height="40" style="width:80px;height:80px;image-rendering:pixelated"></canvas>
-            <div><div class="big" id="vaultBig">0원</div><p class="hint">지난달까지 남은 돈이 쌓인 금액이에요. 이번 달이 끝나면 남은 돈이 더해지고, 모자라면 빠져요.</p></div></div>
+            <div><div class="big" id="vaultBig">0원</div><p class="hint">지난 기간까지 남은 돈이 쌓인 금액이에요. 한 달은 월급날 25일부터 다음 달 24일까지예요. 기간이 끝나면 남은 돈이 금고에 더해지고, 모자라면 금고에서 빠져요.</p></div></div>
         </section>
         <section class="paper card">
           <h2>월별 정산</h2>
           <div class="scroll"><table class="hist" id="hist"></table></div>
-          <p class="hint">남은 돈 = 받은 돈 − 고정비 − 변동비</p>
+          <p class="hint">남은 돈 = 받은 돈 − 고정비 − 변동비 · 기간은 25일 ~ 다음 달 24일</p>
         </section>
         <section class="paper card">
           <h2>사원 정보 <small id="who"></small></h2>

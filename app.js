@@ -2,7 +2,13 @@
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 const won=n=>(n<0?'-':'')+Math.abs(Math.round(n||0)).toLocaleString('ko-KR')+'원';
-const now=new Date();const today=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;const ym=today.slice(0,7);
+const now=new Date();const today=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+/* 살림 기간: 월급날(25일)부터 다음 달 24일까지를 한 달로 봄. 기간 이름은 월급 받은 달 (예: 2026-11 = 11/25~12/24) */
+const PAYDAY=25;
+function periodOf(ds){const [y,m,d]=ds.split('-').map(Number);if(d>=PAYDAY)return `${y}-${pad(m)}`;const t=new Date(y,m-2,1);return `${t.getFullYear()}-${pad(t.getMonth()+1)}`}
+function periodRange(p){const [y,m]=p.split('-').map(Number);return [new Date(y,m-1,PAYDAY),new Date(y,m,PAYDAY-1)]}
+function periodLabel(p,short){const [a,b]=periodRange(p);return short?`${a.getMonth()+1}/${a.getDate()}~${b.getMonth()+1}/${b.getDate()}`:`${a.getMonth()+1}월 ${a.getDate()}일 ~ ${b.getMonth()+1}월 ${b.getDate()}일`}
+const ym=periodOf(today);
 const ymShift=(m,d)=>{const [y,mm]=m.split('-').map(Number);const t=new Date(y,mm-1+d,1);return `${t.getFullYear()}-${pad(t.getMonth()+1)}`};
 
 const DEPTS=[
@@ -63,13 +69,13 @@ function play(n){if(S.sound)try{SFX[n]()}catch(e){}}
 $('soundBtn').onclick=()=>{S.sound=!S.sound;try{localStorage.setItem('uri-sound',S.sound?'on':'off')}catch(e){}renderHud();if(S.sound)play('coin')};
 
 /* ---------- calculations ---------- */
-const exOf=m=>S.expenses.filter(e=>e.date.slice(0,7)===m);
+const exOf=m=>S.expenses.filter(e=>periodOf(e.date)===m);
 const spentOf=m=>exOf(m).reduce((s,e)=>s+e.amount,0);
 const paidSum=m=>FIXED.filter(f=>M(m).paid?.[f.id]).reduce((s,f)=>s+f.a,0);
-function monthsList(){const set=new Set([...Object.keys(S.months),...S.expenses.map(e=>e.date.slice(0,7)),ym]);return [...set].sort()}
+function monthsList(){const set=new Set([...Object.keys(S.months),...S.expenses.map(e=>periodOf(e.date)),ym]);return [...set].sort()}
 function surplus(m){return (S.months[m]?.received||0)-fxTotal()-spentOf(m)}
 function vaultBefore(m){return monthsList().filter(k=>k<m).reduce((s,k)=>s+surplus(k),0)}
-function nsStats(){const days=S.noSpend.filter(d=>d.startsWith(ym));let combo=0;const set=new Set(S.noSpend);let t=new Date(now);for(;;){const k=`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;if(set.has(k)){combo++;t.setDate(t.getDate()-1)}else break}return {count:days.length,combo}}
+function nsStats(){const days=S.noSpend.filter(d=>periodOf(d)===ym);let combo=0;const set=new Set(S.noSpend);let t=new Date(now);for(;;){const k=`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;if(set.has(k)){combo++;t.setDate(t.getDate()-1)}else break}return {count:days.length,combo}}
 
 /* ---------- toast ---------- */
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('show'),1800)}
@@ -127,7 +133,7 @@ function fxRows(el){
 function renderHud(){
   const xp=S.expenses.length+Object.values(S.months).reduce((s,m)=>s+Object.values(m.paid||{}).filter(Boolean).length,0)+S.noSpend.length*3;
   $('lv').textContent=Math.floor(xp/20)+1;const xb=$('xp');xb.textContent='';for(let i=0;i<10;i++){const k=document.createElement('i');if(i<Math.floor((xp%20)/2))k.className='on';xb.appendChild(k)}
-  const spent=spentOf(ym),[y,m]=ym.split('-').map(Number),dim=new Date(y,m,0).getDate();const pace=(spent/TARGET_MAX)/(now.getDate()/dim);
+  const spent=spentOf(ym),[pa,pb]=periodRange(ym),total=Math.round((pb-pa)/864e5)+1,elapsed=Math.max(1,Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-pa)/864e5)+1);const pace=(spent/TARGET_MAX)/(elapsed/total);
   const st=pace<=.9?['good','양호 (잘 아끼고 있어요)']:pace<=1.1?['mid','보통 (페이스 유지!)']:['bad','주의 (예산 관리가 시급합니다!)'];
   $('status').innerHTML='재무 상태: <em></em>';const em=$('status').querySelector('em');em.className=st[0];em.textContent=st[1];
   $('hudVault').textContent=Math.round(vaultBefore(ym)/1000).toLocaleString('ko-KR')+'K';$('hudGem').textContent=nsStats().count;
@@ -140,7 +146,7 @@ function render(){
   // money
   const recv=M(ym).received||0,spent=spentOf(ym),reserved=fxTotal()-paidSum(ym),carry=vaultBefore(ym);
   const avail=recv-fxTotal()-spent;
-  $('oMonth').textContent=`${+ym.slice(5)}월`;
+  $('oMonth').textContent=periodLabel(ym);$('recvPeriod').textContent=periodLabel(ym)+' 살림';
   const kv=(el,rows)=>{el.textContent='';for(const [k,v,cls] of rows){const a=document.createElement('div');a.textContent=k;const b=document.createElement('div');b.className='v '+(cls||'');b.textContent=won(v);if(cls&&cls.includes('t'))a.className='t';el.append(a,b)}};
   kv($('oKv'),[['받은 돈',recv],['고정비 (예약금 포함)',-fxTotal()],['쓴 돈',-spent],['이번 달 남은 돈',avail,'t '+(avail<0?'neg':'pos')]]);
   setBar($('oVarBar'),spent/TARGET_MAX,`${won(spent)} / 목표 100~120만`);
@@ -167,8 +173,8 @@ function render(){
     acts.append(ed,del);r.append(dd,dot,t,a,acts);L.appendChild(r)}
   // vault
   $('vaultBig').textContent=won(carry);
-  const H=$('hist');H.textContent='';const hr=document.createElement('tr');for(const h of['월','받은 돈','고정비','변동비','남은 돈'])hr.appendChild(Object.assign(document.createElement('th'),{textContent:h}));H.appendChild(hr);
-  for(const m of monthsList().reverse()){const tr=document.createElement('tr');const sp=surplus(m);for(const [v,c] of [[`${m.slice(2,4)}.${m.slice(5)}${m===ym?' (진행 중)':''}`],[won(S.months[m]?.received||0)],[won(-fxTotal())],[won(-spentOf(m))],[won(sp),sp<0?'neg':'pos']]){const td=document.createElement('td');td.textContent=v;if(c)td.className=c;tr.appendChild(td)}H.appendChild(tr)}
+  const H=$('hist');H.textContent='';const hr=document.createElement('tr');for(const h of['기간','받은 돈','고정비','변동비','남은 돈'])hr.appendChild(Object.assign(document.createElement('th'),{textContent:h}));H.appendChild(hr);
+  for(const m of monthsList().reverse()){const tr=document.createElement('tr');const sp=surplus(m);for(const [v,c] of [[`${periodLabel(m,true)}${m===ym?' (진행 중)':''}`],[won(S.months[m]?.received||0)],[won(-fxTotal())],[won(-spentOf(m))],[won(sp),sp<0?'neg':'pos']]){const td=document.createElement('td');td.textContent=v;if(c)td.className=c;tr.appendChild(td)}H.appendChild(tr)}
   drawSafe();
   $('fMethod').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===method)));
   drawScene();
