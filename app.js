@@ -1,0 +1,246 @@
+(()=>{
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const won=n=>(n<0?'-':'')+Math.abs(Math.round(n||0)).toLocaleString('ko-KR')+'원';
+const now=new Date();const today=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;const ym=today.slice(0,7);
+const ymShift=(m,d)=>{const [y,mm]=m.split('-').map(Number);const t=new Date(y,mm-1+d,1);return `${t.getFullYear()}-${pad(t.getMonth()+1)}`};
+
+const DEPTS=[
+ {id:'food',n:'식품(장보기)',team:'식자재조달팀',c:'#5aa84f'},
+ {id:'dine',n:'외식/배달',team:'외식·간식지원팀',c:'#e2733a'},
+ {id:'baby',n:'육아용품',team:'신입사원케어팀',c:'#f29bb8'},
+ {id:'choa',n:'초아비용',team:'인턴복지팀',c:'#d8913a'},
+ {id:'home',n:'생필품',team:'총무·비품팀',c:'#55a9c9'},
+ {id:'car',n:'교통',team:'차량운행팀',c:'#c94a3c'},
+ {id:'med',n:'의료/약국',team:'보건관리팀',c:'#4f7fd0'},
+ {id:'self',n:'의류/미용/운동',team:'자기계발팀',c:'#8d63c4'},
+ {id:'gift',n:'경조사/선물',team:'대외협력팀',c:'#c9a23a'},
+ {id:'etc',n:'예비비용',team:'긴급예산팀',c:'#7d8796'},
+];
+let FIXED=[];
+const fxTotal=()=>FIXED.reduce((s,f)=>s+f.a,0);
+const TARGET_MIN=1000000,TARGET_MAX=1200000;
+
+/* ---------- data (Supabase) ---------- */
+const CFG=window.TYCOON_CONFIG||{};
+const sb=window.supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:true,autoRefreshToken:true}});
+let S={expenses:[],months:{},noSpend:[],sound:true};
+try{S.sound=localStorage.getItem('uri-sound')!=='off'}catch(e){}
+const M=m=>(S.months[m]||(S.months[m]={received:0,paid:{}}));
+let loaded=false;
+async function loadAll(){
+  const [e,mo,ns,fx]=await Promise.all([
+    sb.from('expenses').select('*').order('date'),
+    sb.from('months').select('*'),
+    sb.from('no_spend').select('date'),
+    sb.from('fixed_items').select('*').eq('active',true).order('sort')]);
+  const err=e.error||mo.error||ns.error||fx.error;if(err)throw err;
+  S.expenses=e.data.map(r=>({id:r.id,date:r.date,cat:r.cat,place:r.place,amount:r.amount,method:r.method,memo:r.memo,at:r.created_at,by:r.created_by}));
+  S.months={};for(const r of mo.data)S.months[r.ym]={received:r.received,paid:r.paid||{}};
+  S.noSpend=ns.data.map(r=>r.date);
+  FIXED=fx.data.map(r=>({id:r.id,n:r.name,w:r.due,a:r.amount}));
+  loaded=true;$('syncInfo').innerHTML='<span class="syncdot"></span>실시간 동기화 중 · 마지막 갱신 '+new Date().toLocaleTimeString('ko-KR');
+}
+let reloadT=0;
+function scheduleReload(){clearTimeout(reloadT);reloadT=setTimeout(async()=>{try{await loadAll();render()}catch(e){}},250)}
+async function write(fn,okMsg){try{const {error}=await fn();if(error)throw error;if(okMsg)toast(okMsg)}catch(e){console.error(e);toast('저장하지 못했어요. 인터넷 연결을 확인해주세요');scheduleReload()}}
+const saveMonth=m=>write(()=>sb.from('months').upsert({ym:m,received:M(m).received||0,paid:M(m).paid||{},updated_at:new Date().toISOString()}));
+let channel=null;
+function subscribe(){if(channel)return;channel=sb.channel('uri-all');for(const t of['expenses','months','no_spend','fixed_items'])channel.on('postgres_changes',{event:'*',schema:'public',table:t},scheduleReload);channel.subscribe()}
+
+/* ---------- sound (8-bit, generated) ---------- */
+let AC=null;
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}return AC}
+function tone(f,t0,dur,type='square',vol=.08){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,a.currentTime+t0);g.gain.setValueAtTime(vol,a.currentTime+t0);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+t0+dur);o.connect(g).connect(a.destination);o.start(a.currentTime+t0);o.stop(a.currentTime+t0+dur+.02)}
+function noise(t0,dur,vol=.15){const a=ac();if(!a)return;const b=a.createBuffer(1,a.sampleRate*dur,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);const s=a.createBufferSource(),g=a.createGain();s.buffer=b;g.gain.value=vol;s.connect(g).connect(a.destination);s.start(a.currentTime+t0)}
+const SFX={
+ stamp(){noise(0,.09,.25);tone(90,0,.12,'triangle',.2)},
+ coin(){tone(988,0,.07);tone(1319,.07,.18)},
+ alert(){for(let i=0;i<3;i++){tone(880,i*.24,.12,'sawtooth',.05);tone(660,i*.24+.12,.12,'sawtooth',.05)}},
+ fanfare(){[523,659,784,1047].forEach((f,i)=>tone(f,i*.11,.16));tone(1047,.48,.4,'square',.07);tone(784,.48,.4,'triangle',.06)},
+};
+function play(n){if(S.sound)try{SFX[n]()}catch(e){}}
+$('soundBtn').onclick=()=>{S.sound=!S.sound;try{localStorage.setItem('uri-sound',S.sound?'on':'off')}catch(e){}renderHud();if(S.sound)play('coin')};
+
+/* ---------- calculations ---------- */
+const exOf=m=>S.expenses.filter(e=>e.date.slice(0,7)===m);
+const spentOf=m=>exOf(m).reduce((s,e)=>s+e.amount,0);
+const paidSum=m=>FIXED.filter(f=>M(m).paid?.[f.id]).reduce((s,f)=>s+f.a,0);
+function monthsList(){const set=new Set([...Object.keys(S.months),...S.expenses.map(e=>e.date.slice(0,7)),ym]);return [...set].sort()}
+function surplus(m){return (S.months[m]?.received||0)-fxTotal()-spentOf(m)}
+function vaultBefore(m){return monthsList().filter(k=>k<m).reduce((s,k)=>s+surplus(k),0)}
+function nsStats(){const days=S.noSpend.filter(d=>d.startsWith(ym));let combo=0;const set=new Set(S.noSpend);let t=new Date(now);for(;;){const k=`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;if(set.has(k)){combo++;t.setDate(t.getDate()-1)}else break}return {count:days.length,combo}}
+
+/* ---------- toast ---------- */
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('show'),1800)}
+
+/* ---------- scene effects (background art + overlay canvas) ---------- */
+const fx=$('fx'),fc=fx.getContext('2d');let hearts=[],sparks=[];
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function heart(x,y,a){fc.globalAlpha=a;fc.fillStyle='#ff4f7a';[[1,0],[2,0],[4,0],[5,0],[0,1],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[1,3],[2,3],[3,3],[4,3],[5,3],[2,4],[3,4],[4,4],[3,5]].forEach(([i,j])=>fc.fillRect(x+i*2,y+j*2,2,2));fc.globalAlpha=1}
+function fxLoop(t){fc.clearRect(0,0,512,138);
+  hearts=hearts.filter(h=>t-h.t0<1800);for(const h of hearts){if(t<h.t0)continue;const k=(t-h.t0)/1800;heart(h.x+Math.sin(k*6+h.x)*4,h.y-k*34,1-k)}
+  sparks=sparks.filter(p=>t-p.t0<900);for(const p of sparks){const k=(t-p.t0)/900;fc.globalAlpha=1-k;fc.fillStyle=p.c;fc.fillRect(p.x+p.vx*k*30,p.y+p.vy*k*30+k*k*20,3,3);fc.globalAlpha=1}
+  requestAnimationFrame(fxLoop)}
+if(!reduce)requestAnimationFrame(fxLoop);
+function floatText(txt,lp,tp){if(reduce)return;const d=document.createElement('div');d.className='float';d.textContent=txt;d.style.left=lp+'%';d.style.top=tp+'%';$('stage').appendChild(d);setTimeout(()=>d.remove(),1500)}
+function burst(x,y,colors){const t=performance.now();for(let i=0;i<14;i++){const a=Math.random()*Math.PI*2;sparks.push({x,y,vx:Math.cos(a),vy:Math.sin(a)-.6,c:colors[i%colors.length],t0:t})}}
+function react(cat,amount){const t=performance.now();
+  if(cat==='choa'){wake(true)}
+  else if(cat==='baby'){babyHappy('찬솔이 최애템 GET!');burst(242,100,['#f29bb8','#9fd0f0','#f2b632'])}
+  else floatText(`-${amount.toLocaleString('ko-KR')}`,'28','50');
+  burst(286,70,['#f2b632','#ffd96a'])}
+let dogT=[];
+function pose(p){const b=$('dogBtn');b.className='dogbtn'+(p==='sleep'?'':' '+p);$('dog').src='assets/choa_'+p+'.png';$('zzz').hidden=p!=='sleep'}
+function wake(withHearts){dogT.forEach(clearTimeout);dogT=[];pose('lie');
+  dogT.push(setTimeout(()=>{pose('sit');if(withHearts){const t=performance.now();for(let i=0;i<6;i++)hearts.push({x:206+i*6,y:44,t0:t+i*140});floatText('초아: 멍! 고마워요','42','22')}else floatText('초아: 멍?','42','22')},300));
+  dogT.push(setTimeout(()=>pose('lie'),3000));dogT.push(setTimeout(()=>pose('sleep'),3400))}
+$('dogBtn').onclick=()=>{wake(false)};
+let babyT=0;
+function babyRest(){const h=new Date().getHours();return (h>=21||h<7)?'sleep':'crawl'}
+function babyPose(p){$('babyBtn').className='babybtn '+p;$('baby').src='assets/chansol_'+p+'.png'}
+function babyHappy(msg){clearTimeout(babyT);babyPose('sit');floatText(msg,'47','58');babyT=setTimeout(()=>babyPose(babyRest()),3000)}
+$('babyBtn').onclick=()=>babyHappy(babyRest()==='sleep'?'찬솔: 응애… (졸려)':'찬솔: 까르르!');
+babyPose(babyRest());
+['assets/choa_lie.png','assets/choa_sit.png','assets/chansol_sit.png','assets/chansol_crawl.png','assets/chansol_sleep.png'].forEach(src=>{const i=new Image();i.src=src});
+function drawScene(){const left=(M(ym).received||0)-fxTotal()-spentOf(ym);const bo=$('bossBub');bo.textContent='';const bb=document.createElement('div');bo.appendChild(bb);const lines=left>=0?['이번 달 남은 돈',won(left)+'!','아껴 쓰자!']:['이번 달',won(-left)+' 초과!','금고에서 채우자!'];lines.forEach((t,i)=>{if(i)bb.appendChild(document.createElement('br'));const sp=document.createElement('span');sp.textContent=t;if(i===1){sp.style.color=left>=0?'#2f7d2b':'#d2402f';sp.style.fontSize='1.15em'}bb.appendChild(sp)});$('vaultTag').textContent=Math.round(vaultBefore(ym)/10000).toLocaleString('ko-KR')+'만원'}
+/* ---------- dept icons ---------- */
+function deptIcon(c,d){const x=c.getContext('2d');c.width=14;c.height=14;x.fillStyle='#000';x.fillRect(2,2,10,10);x.fillStyle=d.c;x.fillRect(3,3,8,8);x.fillStyle='rgba(255,255,255,.55)';x.fillRect(3,3,8,2);x.fillStyle='#fff';x.font='bold 7px monospace';x.fillText(String(DEPTS.indexOf(d)+1%10),DEPTS.indexOf(d)>=9?2:5,10)}
+function deptGrid(el,onPick,selected){el.textContent='';for(const d of DEPTS){const b=document.createElement('button');b.type='button';b.className='dept';b.setAttribute('aria-pressed',String(selected===d.id));const c=document.createElement('canvas');deptIcon(c,d);const t=document.createElement('b');t.textContent=d.n;b.title=`${d.n} [${d.team}]`;b.append(c,t);b.onclick=()=>onPick(d.id);el.appendChild(b)}}
+
+/* ---------- state for form ---------- */
+let selDept='food',method='카드',editId=null;
+
+/* ---------- render ---------- */
+function setBar(el,ratio,label,warnAt=.8){el.classList.toggle('over',ratio>1);el.classList.toggle('warn',ratio>=warnAt&&ratio<=1);el.querySelector('i').style.width=Math.min(100,ratio*100)+'%';el.querySelector('span').textContent=label}
+function fxRows(el){
+  el.textContent='';const paid=M(ym).paid||{};
+  for(const f of FIXED){const b=document.createElement('button');b.type='button';b.className='fxrow'+(paid[f.id]?' done':'');
+    const box=document.createElement('span');box.className='box';box.textContent=paid[f.id]?'✓':'';
+    const nm=document.createElement('span');nm.className='nm';nm.textContent=f.n;if(f.w){const s=document.createElement('small');s.textContent=f.w;nm.appendChild(s)}
+    const am=document.createElement('span');am.className='am';am.textContent=f.a.toLocaleString('ko-KR');
+    const st=document.createElement('span');st.className='stamp';st.textContent=paid[f.id]?'결재 완료':'결재 대기';
+    b.append(box,nm,am,st);b.setAttribute('aria-pressed',String(!!paid[f.id]));b.setAttribute('aria-label',`${f.n} ${f.a}원 ${paid[f.id]?'결재 완료':'결재 대기'}`);
+    b.onclick=()=>{const m=M(ym);m.paid={...(m.paid||{}),[f.id]:!m.paid?.[f.id]};saveMonth(ym);if(m.paid[f.id]){play('stamp');if(FIXED.length&&FIXED.every(x=>m.paid[x.id])){setTimeout(()=>play('fanfare'),250);toast('고정비 올 클리어!')}}render()};
+    el.appendChild(b)}
+}
+function renderHud(){
+  const xp=S.expenses.length+Object.values(S.months).reduce((s,m)=>s+Object.values(m.paid||{}).filter(Boolean).length,0)+S.noSpend.length*3;
+  $('lv').textContent=Math.floor(xp/20)+1;const xb=$('xp');xb.textContent='';for(let i=0;i<10;i++){const k=document.createElement('i');if(i<Math.floor((xp%20)/2))k.className='on';xb.appendChild(k)}
+  const spent=spentOf(ym),[y,m]=ym.split('-').map(Number),dim=new Date(y,m,0).getDate();const pace=(spent/TARGET_MAX)/(now.getDate()/dim);
+  const st=pace<=.9?['good','양호 (잘 아끼고 있어요)']:pace<=1.1?['mid','보통 (페이스 유지!)']:['bad','주의 (예산 관리가 시급합니다!)'];
+  $('status').innerHTML='재무 상태: <em></em>';const em=$('status').querySelector('em');em.className=st[0];em.textContent=st[1];
+  $('hudVault').textContent=Math.round(vaultBefore(ym)/1000).toLocaleString('ko-KR')+'K';$('hudGem').textContent=nsStats().count;
+  $('soundBtn').textContent=S.sound?'소리 ON':'소리 OFF';$('soundBtn').setAttribute('aria-pressed',String(S.sound));
+}
+function render(){
+  renderHud();
+  const paid=M(ym).paid||{};const done=FIXED.filter(f=>paid[f.id]).length;
+  for(const [el,cnt,bar] of [[$('oFx'),$('oFxCount'),$('oFxBar')],[$('fFx'),$('fCount'),$('fBar')]]){fxRows(el);cnt.textContent=`${done}/${FIXED.length} 완료`;setBar(bar,done/FIXED.length,`${done}/${FIXED.length} 완료`,2)}
+  // money
+  const recv=M(ym).received||0,spent=spentOf(ym),reserved=fxTotal()-paidSum(ym),carry=vaultBefore(ym);
+  const avail=recv-fxTotal()-spent;
+  $('oMonth').textContent=`${+ym.slice(5)}월`;
+  const kv=(el,rows)=>{el.textContent='';for(const [k,v,cls] of rows){const a=document.createElement('div');a.textContent=k;const b=document.createElement('div');b.className='v '+(cls||'');b.textContent=won(v);if(cls&&cls.includes('t'))a.className='t';el.append(a,b)}};
+  kv($('oKv'),[['받은 돈',recv],['고정비 (예약금 포함)',-fxTotal()],['쓴 돈',-spent],['이번 달 남은 돈',avail,'t '+(avail<0?'neg':'pos')]]);
+  setBar($('oVarBar'),spent/TARGET_MAX,`${won(spent)} / 목표 100~120만`);
+  kv($('fKv'),[['받은 돈',recv],['결재 완료 고정비',-paidSum(ym)],['예약금 (결재 대기)',-reserved],['변동비로 쓸 수 있는 돈',recv-fxTotal(),'t '+(recv-fxTotal()<0?'neg':'pos')]]);
+  if(document.activeElement!==$('recvIn'))$('recvIn').value=recv?recv.toLocaleString('ko-KR'):'';
+  deptGrid($('oDepts'),id=>{selDept=id;go('var');$('fAmt').focus()},null);
+  deptGrid($('fDepts'),id=>{selDept=id;render()},selDept);
+  const ns=nsStats();$('nsCount').textContent=ns.count;$('nsCombo').textContent=ns.combo;
+  const spentToday=S.expenses.some(e=>e.date===today);$('noSpendBtn').disabled=spentToday||S.noSpend.includes(today);$('noSpendBtn').textContent=S.noSpend.includes(today)?'오늘 무지출 달성 중':spentToday?'오늘은 지출이 있어요':'오늘 무지출 데이 선언';
+  // chart
+  const ex=exOf(ym);const tot=ex.reduce((s,e)=>s+e.amount,0);$('chartTotal').textContent=`합계 ${won(tot)}`;
+  const ch=$('chart');ch.textContent='';const sums=DEPTS.map(d=>({d,v:ex.filter(e=>e.cat===d.id).reduce((s,e)=>s+e.amount,0)})).sort((a,b)=>b.v-a.v);const mx=Math.max(1,...sums.map(s=>s.v));
+  for(const {d,v} of sums){const r=document.createElement('div');r.className='crow';const n=document.createElement('span');n.textContent=d.n;const bar=document.createElement('div');bar.className='bar';const i=document.createElement('i');i.style.width=(v/mx*100)+'%';i.style.background=d.c;bar.appendChild(i);const val=document.createElement('span');val.className='v';val.textContent=v?`${Math.round(v/1000)}K · ${tot?Math.round(v/tot*100):0}%`:'-';r.append(n,bar,val);ch.appendChild(r)}
+  // ledger
+  const L=$('ledger');L.textContent='';const sorted=[...ex].sort((a,b)=>(b.date+b.at).localeCompare(a.date+a.at));$('ledgerCount').textContent=`${sorted.length}건`;
+  if(!sorted.length){const e=document.createElement('div');e.className='empty';e.textContent='이번 달 결재 내역이 없어요. 위에서 품의서를 올려보세요.';L.appendChild(e)}
+  for(const e of sorted){const d=DEPTS.find(x=>x.id===e.cat)||DEPTS[9];const r=document.createElement('div');r.className='lrow';
+    const dd=document.createElement('span');dd.className='d';dd.textContent=`${+e.date.slice(5,7)}/${+e.date.slice(8)}`;
+    const dot=document.createElement('span');dot.className='dot';dot.style.background=d.c;
+    const t=document.createElement('div');t.className='t';const b=document.createElement('b');b.textContent=e.place||d.n;const s=document.createElement('span');s.textContent=`${d.n} · ${e.method}${e.memo?' · '+e.memo:''}`;t.append(b,s);
+    const a=document.createElement('span');a.className='a';a.textContent=e.amount.toLocaleString('ko-KR');
+    const acts=document.createElement('div');acts.className='acts';const ed=document.createElement('button');ed.textContent='수정';ed.onclick=()=>startEdit(e);const del=document.createElement('button');del.textContent='삭제';
+    del.onclick=()=>{if(del.dataset.c){S.expenses=S.expenses.filter(x=>x.id!==e.id);render();write(()=>sb.from('expenses').delete().eq('id',e.id),'삭제했어요')}else{del.dataset.c='1';del.textContent='정말?';del.className='danger';setTimeout(()=>{if(del.isConnected){delete del.dataset.c;del.textContent='삭제';del.className=''}},3000)}};
+    acts.append(ed,del);r.append(dd,dot,t,a,acts);L.appendChild(r)}
+  // vault
+  $('vaultBig').textContent=won(carry);
+  const H=$('hist');H.textContent='';const hr=document.createElement('tr');for(const h of['월','받은 돈','고정비','변동비','남은 돈'])hr.appendChild(Object.assign(document.createElement('th'),{textContent:h}));H.appendChild(hr);
+  for(const m of monthsList().reverse()){const tr=document.createElement('tr');const sp=surplus(m);for(const [v,c] of [[`${m.slice(2,4)}.${m.slice(5)}${m===ym?' (진행 중)':''}`],[won(S.months[m]?.received||0)],[won(-fxTotal())],[won(-spentOf(m))],[won(sp),sp<0?'neg':'pos']]){const td=document.createElement('td');td.textContent=v;if(c)td.className=c;tr.appendChild(td)}H.appendChild(tr)}
+  drawSafe();
+  $('fMethod').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===method)));
+  drawScene();
+}
+function drawSafe(){const c=$('safeCv').getContext('2d');c.clearRect(0,0,40,40);c.fillStyle='#4b5262';c.fillRect(4,4,32,32);c.fillStyle='#6b7385';c.fillRect(6,6,28,28);c.fillStyle='#c9c9c9';c.fillRect(16,14,8,8);c.fillStyle='#888';c.fillRect(19,12,2,12);const n=Math.max(0,Math.min(12,Math.floor(vaultBefore(ym)/80000)));for(let i=0;i<n;i++){c.fillStyle='#f2b632';c.fillRect(8+(i%4)*6,32-Math.floor(i/4)*3,5,3)}}
+
+/* ---------- tabs ---------- */
+function go(v){document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.v===v)));document.querySelectorAll('.view').forEach(x=>x.hidden=x.dataset.view!==v);try{localStorage.setItem('uri-tab',v)}catch(e){}}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>go(t.dataset.v));
+try{const t=localStorage.getItem('uri-tab');if(t)go(t)}catch(e){}
+
+/* ---------- form ---------- */
+const num=v=>parseInt(String(v).replace(/[^0-9]/g,''),10)||0;
+for(const id of['fAmt','recvIn'])$(id).addEventListener('input',e=>{const n=num(e.target.value);e.target.value=n?n.toLocaleString('ko-KR'):''});
+$('fDate').value=today;
+$('fMethod').onclick=e=>{const m=e.target.dataset?.m;if(m){method=m;render()}};
+function startEdit(e){editId=e.id;selDept=e.cat;method=e.method;$('fDate').value=e.date;$('fPlace').value=e.place;$('fAmt').value=e.amount.toLocaleString('ko-KR');$('fMemo').value=e.memo||'';$('formTitle').textContent='품의서 수정';$('fSubmit').textContent='수정 결재';$('fCancel').hidden=false;go('var');render();$('fAmt').focus()}
+function endEdit(){editId=null;$('form').reset();$('fDate').value=today;$('formTitle').textContent='품의서 작성';$('fSubmit').textContent='결재 올리기';$('fCancel').hidden=true}
+$('fCancel').onclick=()=>{endEdit();render()};
+$('form').onsubmit=e=>{e.preventDefault();const amount=num($('fAmt').value);if(!amount){toast('금액을 입력해주세요');$('fAmt').focus();return}
+  const rec={cat:selDept,place:$('fPlace').value.trim().slice(0,40),amount,method,memo:$('fMemo').value.trim().slice(0,60),date:$('fDate').value||today};
+  const before=spentOf(ym);
+  if(editId){const id=editId;const x=S.expenses.find(x=>x.id===id);Object.assign(x,rec);write(()=>sb.from('expenses').update({...rec,updated_at:new Date().toISOString()}).eq('id',id),'수정했어요')}
+  else{const id=crypto.randomUUID();S.expenses.push({id,...rec,at:new Date().toISOString()});write(()=>sb.from('expenses').insert({id,...rec}));toast(`${DEPTS.find(d=>d.id===selDept).team} 결재 완료!`)}
+  if(S.noSpend.includes(rec.date)){S.noSpend=S.noSpend.filter(d=>d!==rec.date);write(()=>sb.from('no_spend').delete().eq('date',rec.date))}
+  play('coin');react(selDept,amount);
+  const after=spentOf(ym);if(before<TARGET_MAX*.8&&after>=TARGET_MAX*.8){setTimeout(()=>play('alert'),300);toast('경고! 목표 생활비의 80%를 넘었어요')}
+  endEdit();render()};
+$('recvSave').onclick=()=>{M(ym).received=num($('recvIn').value);saveMonth(ym).then(()=>toast('받은 돈을 저장했어요'));play('coin');render()};
+$('noSpendBtn').onclick=()=>{if(!S.noSpend.includes(today)){S.noSpend.push(today);write(()=>sb.from('no_spend').insert({date:today}));play('fanfare');toast('무지출 데이 달성!')}render()};
+
+/* ---------- lock: login once, then PIN ---------- */
+const PIN_KEY='uri-pin',SEEN_KEY='uri-last';let pinBuf='',pinMode='enter',pinFirst='',pinFails=0,userEmail='';
+async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const getPin=()=>{try{return localStorage.getItem(PIN_KEY)}catch(e){return null}};
+const setPin=v=>{try{v?localStorage.setItem(PIN_KEY,v):localStorage.removeItem(PIN_KEY)}catch(e){}};
+function showLock(view,msg=''){$('lock').hidden=false;$('app').hidden=true;$('lkLogin').hidden=view!=='login';$('lkPin').hidden=view!=='pin';$('lkErr').textContent=msg;if(view==='login')setTimeout(()=>$('lkEmail').focus(),50)}
+function pinView(mode){pinMode=mode;pinBuf='';$('pinMsg').textContent=mode==='set'?'새 PIN 4자리를 정해주세요':mode==='confirm'?'한 번 더 눌러주세요':'PIN 4자리를 눌러주세요';$('forgot').hidden=mode!=='enter';drawDots();showLock('pin')}
+function drawDots(){[...$('dots').children].forEach((d,i)=>d.classList.toggle('on',i<pinBuf.length))}
+function shake(){const d=$('dots');d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake')}
+{const pad=$('pad');for(const k of['1','2','3','4','5','6','7','8','9','','0','⌫']){const b=document.createElement('button');b.type='button';b.textContent=k;if(!k){b.disabled=true;b.style.visibility='hidden'}b.setAttribute('aria-label',k==='⌫'?'지우기':k);b.onclick=()=>pinKey(k);pad.appendChild(b)}
+ document.addEventListener('keydown',e=>{if($('lkPin').hidden)return;if(/^[0-9]$/.test(e.key))pinKey(e.key);else if(e.key==='Backspace')pinKey('⌫')})}
+async function pinKey(k){if(k==='⌫'){pinBuf=pinBuf.slice(0,-1);drawDots();return}if(pinBuf.length>=4)return;pinBuf+=k;drawDots();if(pinBuf.length<4)return;
+  const v=pinBuf;await new Promise(r=>setTimeout(r,120));
+  if(pinMode==='set'){pinFirst=v;pinView('confirm');return}
+  if(pinMode==='confirm'){if(v===pinFirst){setPin(await sha(userEmail+':'+v));play('stamp');enterApp()}else{shake();$('lkErr').textContent='두 번 입력한 PIN이 달라요. 다시 정해주세요';pinView('set')}return}
+  if(await sha(userEmail+':'+v)===getPin()){pinFails=0;play('coin');enterApp()}
+  else{pinFails++;shake();pinBuf='';drawDots();if(pinFails>=5){setPin(null);await sb.auth.signOut();showLock('login','PIN을 5번 틀려서 다시 로그인해야 해요')}else $('lkErr').textContent=`PIN이 맞지 않아요 (${pinFails}/5)`}}
+$('forgot').onclick=async()=>{setPin(null);await sb.auth.signOut();showLock('login')};
+$('loginForm').onsubmit=async e=>{e.preventDefault();$('lkGo').disabled=true;$('lkErr').textContent='';
+  const {data,error}=await sb.auth.signInWithPassword({email:$('lkEmail').value.trim(),password:$('lkPw').value});
+  $('lkGo').disabled=false;
+  if(error){$('lkErr').textContent='이메일이나 비밀번호가 맞지 않아요';return}
+  userEmail=data.user.email;$('lkPw').value='';
+  const {data:mem}=await sb.from('members').select('email');
+  if(!mem||!mem.length){await sb.auth.signOut();showLock('login','이 계정은 사원 명부에 없어요. Supabase의 members 표에 이메일을 넣어주세요');return}
+  pinView('set')};
+async function enterApp(){$('lkErr').textContent='';try{localStorage.setItem(SEEN_KEY,String(Date.now()))}catch(e){}
+  try{await loadAll()}catch(e){showLock('pin','데이터를 불러오지 못했어요. 인터넷 연결을 확인해주세요');return}
+  $('lock').hidden=true;$('app').hidden=false;$('who').textContent=userEmail;subscribe();render();
+  {const sc=$('scene');if(sc.scrollWidth>sc.clientWidth)sc.scrollLeft=(sc.scrollWidth-sc.clientWidth)*0.35}}
+function lockNow(){if(!$('app').hidden){pinView('enter')}}
+$('lockNow').onclick=lockNow;
+$('changePin').onclick=()=>pinView('set');
+$('logout').onclick=async()=>{setPin(null);await sb.auth.signOut();showLock('login')};
+let hiddenAt=0;
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now()}else{if(hiddenAt&&Date.now()-hiddenAt>5*60*1000)lockNow();else if(loaded)scheduleReload()}});
+(async()=>{
+  if(!CFG.url||CFG.url.includes('YOUR')){showLock('login','설정이 아직 안 됐어요: config.js에 Supabase 주소와 키를 넣어주세요');$('lkGo').disabled=true;return}
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){showLock('login');return}
+  userEmail=session.user.email;
+  if(!getPin())pinView('set');else pinView('enter');
+})();
+})();
