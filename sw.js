@@ -1,5 +1,5 @@
 // 우리집 자산관리(주) 서비스 워커: 앱 화면 파일만 저장해서 빠르게 열고, 돈 데이터(Supabase)는 저장하지 않음
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = 'uri-tycoon-' + VERSION;
 const SHELL = [
   './', './index.html', './style.css', './app.js', './config.js', './manifest.json',
@@ -8,7 +8,7 @@ const SHELL = [
   './icons/icon-192.png', './icons/icon-512.png'
 ];
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -26,6 +26,6 @@ self.addEventListener('fetch', e => {
     return;
   }
   // 화면 파일과 라이브러리: 새 버전을 먼저 받고, 인터넷이 안 되면 저장본 사용
-  e.respondWith(fetch(req).then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; })
+  e.respondWith(fetch(sameOrigin ? new Request(req, { cache: 'no-cache' }) : req).then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; })
     .catch(() => caches.match(req).then(hit => hit || caches.match('./index.html'))));
 });
