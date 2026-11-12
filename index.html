@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -95,6 +95,7 @@
       <button class="tab" role="tab" data-v="office" aria-selected="true">사무실</button>
       <button class="tab" role="tab" data-v="fixed" aria-selected="false">고정비 결재</button>
       <button class="tab" role="tab" data-v="var" aria-selected="false">변동비 관리</button>
+      <button class="tab" role="tab" data-v="pay" aria-selected="false">결제수단</button>
       <button class="tab" role="tab" data-v="vault" aria-selected="false">이월 금고</button>
     </nav>
     <div class="panels">
@@ -169,6 +170,16 @@
         </section>
       </div>
 
+      <!-- PAYMENT METHODS -->
+      <div class="view" data-view="pay" hidden>
+        <section class="paper card">
+          <h2>결제수단별 합계 <small id="payPeriod"></small></h2>
+          <div class="paytot"><span>이번 기간 변동비</span><b class="px" id="payTotal">0원</b></div>
+          <div class="paylist" id="payList"></div>
+          <p class="hint">줄을 누르면 그 결제수단으로 쓴 내역이 펼쳐져요.</p>
+        </section>
+      </div>
+
       <!-- VAULT -->
       <div class="view" data-view="vault" hidden>
         <section class="paper card">
@@ -198,7 +209,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=10"></script>
-<script src="app.js?v=10"></script>
+<script src="config.js?v=11"></script>
+<script src="app.js?v=11"></script>
 </body>
 </html>

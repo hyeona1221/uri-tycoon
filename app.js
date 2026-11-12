@@ -189,10 +189,34 @@ function render(){
   drawSafe();
   $('fMethod').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(!$('fMethodCustom').value.trim()&&b.dataset.m===method)));
   if(role==='boss')renderBoss();
-  renderPlaces();
+  renderPlaces();renderPay();
   drawScene();
 }
 function drawSafe(){const c=$('safeCv').getContext('2d');c.clearRect(0,0,40,40);c.fillStyle='#4b5262';c.fillRect(4,4,32,32);c.fillStyle='#6b7385';c.fillRect(6,6,28,28);c.fillStyle='#c9c9c9';c.fillRect(16,14,8,8);c.fillStyle='#888';c.fillRect(19,12,2,12);const n=Math.max(0,Math.min(12,Math.floor(vaultBefore(ym)/80000)));for(let i=0;i<n;i++){c.fillStyle='#f2b632';c.fillRect(8+(i%4)*6,32-Math.floor(i/4)*3,5,3)}}
+
+/* ---------- payment method totals ---------- */
+let payOpen=null;
+function renderPay(){
+  $('payPeriod').textContent=periodLabel(ym);
+  const ex=exOf(ym);const tot=ex.reduce((s,e)=>s+e.amount,0);$('payTotal').textContent=won(tot);
+  const g={};for(const e of ex){const k=(e.method||'기타').trim()||'기타';(g[k]=g[k]||{sum:0,n:0,items:[]});g[k].sum+=e.amount;g[k].n++;g[k].items.push(e)}
+  const rows=Object.entries(g).sort((a,b)=>b[1].sum-a[1].sum);const box=$('payList');box.textContent='';
+  if(!rows.length){const d=document.createElement('div');d.className='empty';d.textContent='이번 기간 결재 내역이 없어요.';box.appendChild(d);return}
+  for(const [k,v] of rows){
+    const b=document.createElement('button');b.type='button';b.className='payrow';b.setAttribute('aria-expanded',String(payOpen===k));
+    const nm=document.createElement('span');nm.className='nm';nm.textContent=k;const sm=document.createElement('small');sm.textContent=`${v.n}건 · ${tot?Math.round(v.sum/tot*100):0}%`;nm.appendChild(sm);
+    const val=document.createElement('span');val.className='v';val.textContent=won(v.sum);
+    const bar=document.createElement('div');bar.className='bar';const i=document.createElement('i');i.style.width=(tot?v.sum/tot*100:0)+'%';bar.appendChild(i);
+    b.append(nm,val,bar);b.onclick=()=>{payOpen=payOpen===k?null:k;renderPay()};box.appendChild(b);
+    if(payOpen===k){const det=document.createElement('div');det.className='paydetail';
+      for(const e of [...v.items].sort((a,b)=>(b.date+b.at).localeCompare(a.date+a.at))){const d=DEPTS.find(x=>x.id===e.cat)||DEPTS[9];const r=document.createElement('div');r.className='lrow';
+        const dd=document.createElement('span');dd.className='d';dd.textContent=`${+e.date.slice(5,7)}/${+e.date.slice(8)}`;
+        const dot=document.createElement('span');dot.className='dot';dot.style.background=d.c;
+        const t=document.createElement('div');t.className='t';const bb=document.createElement('b');bb.textContent=e.place||d.n;const s2=document.createElement('span');s2.textContent=d.n+(e.memo?' · '+e.memo:'');t.append(bb,s2);
+        const a=document.createElement('span');a.className='a';a.textContent=e.amount.toLocaleString('ko-KR');r.append(dd,dot,t,a);det.appendChild(r)}
+      box.appendChild(det)}
+  }
+}
 
 /* ---------- husband tab (대표이사) ---------- */
 const H_DED=[{id:'loan',n:'대출금',a:489101},{id:'mgmt',n:'관리비예산',a:300000},{id:'pocket',n:'남편용돈',a:300000},{id:'auto',n:'자동이체',a:1205793}];

@@ -1,5 +1,5 @@
 // 우리집 자산관리(주) 서비스 워커: 앱 화면 파일만 저장해서 빠르게 열고, 돈 데이터(Supabase)는 저장하지 않음
-const VERSION = 'v10';
+const VERSION = 'v11';
 const CACHE = 'uri-tycoon-' + VERSION;
 const SHELL = [
   './', './index.html', './style.css', './app.js', './config.js', './manifest.json',

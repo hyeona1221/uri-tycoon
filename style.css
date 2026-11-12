@@ -197,3 +197,15 @@ table.hist td{padding:6px 4px;border-bottom:1px solid #d3cab3;text-align:right;f
 .places button.recent{border-style:dashed}
 
 #fMethod{flex-wrap:wrap}#fMethod button{flex:1 1 22%;min-width:0;white-space:nowrap}
+
+.paytot{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:4px}
+.paytot b{font-size:28px}
+.paylist{display:flex;flex-direction:column}
+.payrow{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:10px 2px;border-bottom:2px dashed #cfc6b0;background:none;border-left:0;border-right:0;border-top:0;text-align:left;width:100%}
+.payrow .nm{font-weight:700;font-size:15px}.payrow .nm small{font-weight:400;color:var(--muted);font-size:12px;margin-left:6px}
+.payrow .v{font-family:var(--px);font-size:22px;text-align:right}
+.payrow .bar{grid-column:1/-1;height:12px;background:#d8d0bb;border:2px solid #000;position:relative}
+.payrow .bar i{position:absolute;inset:0 auto 0 0;background:var(--blue)}
+.paydetail{padding:2px 0 8px 10px;border-bottom:2px dashed #cfc6b0}
+.paydetail .lrow{grid-template-columns:44px 12px 1fr auto}
+@media (max-width:760px){.tab{font-size:13px;padding:8px 1px}}
