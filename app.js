@@ -187,7 +187,7 @@ const H_DED=[{id:'loan',n:'대출금',a:489101},{id:'mgmt',n:'관리비예산',a
 const H_DED_TOTAL=H_DED.reduce((s,d)=>s+d.a,0);
 let role='wife';try{role=localStorage.getItem('uri-role')||'wife'}catch(e){}
 const H=()=>{const p=M(ym).paid||(M(ym).paid={});return p.h||(p.h={salary:0,bonus:0,salaryOk:false,bonusOk:false,ded:{},sent:false})};
-const H_INC=[['salary','20일 급여'],['bonus','25일 상여금'],['extra','가급 보너스']];
+const H_INC=[['salary','20일 급여'],['bonus','25일 상여금'],['extra','보너스']];
 const hIncome=()=>{const h=H();return H_INC.reduce((s,[k])=>s+(h[k]||0),0)};
 const hSend=()=>hIncome()-H_DED_TOTAL;
 function bossLines(){const h=H();
