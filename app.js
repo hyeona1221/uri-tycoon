@@ -410,12 +410,12 @@ async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncod
 const getPin=()=>{try{return localStorage.getItem(PIN_KEY)}catch(e){return null}};
 const setPin=v=>{try{v?localStorage.setItem(PIN_KEY,v):localStorage.removeItem(PIN_KEY)}catch(e){}};
 function showLock(view,msg=''){$('lock').hidden=false;$('app').hidden=true;$('lkLogin').hidden=view!=='login';$('lkPin').hidden=view!=='pin';$('lkErr').textContent=msg;if(view==='login')setTimeout(()=>$('lkEmail').focus(),50)}
-function pinView(mode){pinMode=mode;pinBuf='';$('pinMsg').textContent=mode==='set'?'새 PIN 4자리를 정해주세요':mode==='confirm'?'한 번 더 눌러주세요':'PIN 4자리를 눌러주세요';$('forgot').hidden=mode!=='enter';drawDots();showLock('pin')}
+function pinView(mode){pinMode=mode;pinBuf='';pinFails=0;$('pinMsg').textContent=mode==='set'?'새 PIN 4자리를 정해주세요':mode==='confirm'?'한 번 더 눌러주세요':'PIN 4자리를 눌러주세요';$('forgot').hidden=mode!=='enter';drawDots();showLock('pin')}
 function drawDots(){[...$('dots').children].forEach((d,i)=>d.classList.toggle('on',i<pinBuf.length))}
 function shake(){const d=$('dots');d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake')}
 {const pad=$('pad');for(const k of['1','2','3','4','5','6','7','8','9','','0','⌫']){const b=document.createElement('button');b.type='button';b.textContent=k;if(!k){b.disabled=true;b.style.visibility='hidden'}b.setAttribute('aria-label',k==='⌫'?'지우기':k);b.onclick=()=>pinKey(k);pad.appendChild(b)}
- document.addEventListener('keydown',e=>{if($('lkPin').hidden)return;if(/^[0-9]$/.test(e.key))pinKey(e.key);else if(e.key==='Backspace')pinKey('⌫')})}
-async function pinKey(k){if(k==='⌫'){pinBuf=pinBuf.slice(0,-1);drawDots();return}if(pinBuf.length>=4)return;pinBuf+=k;drawDots();if(pinBuf.length<4)return;
+ document.addEventListener('keydown',e=>{if($('lock').hidden||$('lkPin').hidden)return;const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;if(/^[0-9]$/.test(e.key))pinKey(e.key);else if(e.key==='Backspace')pinKey('⌫')})}
+async function pinKey(k){if($('lock').hidden)return;if(k==='⌫'){pinBuf=pinBuf.slice(0,-1);drawDots();return}if(pinBuf.length>=4)return;pinBuf+=k;drawDots();if(pinBuf.length<4)return;
   const v=pinBuf;await new Promise(r=>setTimeout(r,120));
   if(pinMode==='set'){pinFirst=v;pinView('confirm');return}
   if(pinMode==='confirm'){if(v===pinFirst){setPin(await sha(userEmail+':'+v));play('stamp');enterApp()}else{shake();$('lkErr').textContent='두 번 입력한 PIN이 달라요. 다시 정해주세요';pinView('set')}return}
