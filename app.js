@@ -149,7 +149,7 @@ $('scanBox').hidden=!CFG.receipt;
 for(const id of['scanCam','scanPick'])$(id).addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';scanFile(f)});
 
 /* ---------- frequent places ---------- */
-const PLACES_EXP=['당근','쿠팡','마트','편의점','네이버쇼핑'],PLACES_INC=['당근','중고나라','환급','용돈','체험단'];
+const PLACES_EXP=['당근','쿠팡','마트','편의점','네이버쇼핑'],PLACES_INC=['당근','환급','용돈','체험단'];
 function renderPlaces(){const box=$('fPlaces');box.textContent='';const cur=$('fPlace').value.trim();const PLACES=kind==='inc'?PLACES_INC:PLACES_EXP;
   const freq={};for(const e of (kind==='inc'?allInc():S.expenses)){const p=(e.place||'').trim();if(p&&!PLACES.includes(p))freq[p]=(freq[p]||0)+1}
   const recent=Object.entries(freq).filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([p])=>p);
