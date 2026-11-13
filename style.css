@@ -249,3 +249,10 @@ table.hist td{padding:6px 4px;border-bottom:1px solid #d3cab3;text-align:right;f
 @keyframes blink{50%{opacity:0}}
 .filled{animation:flash 1.2s ease-out}
 @keyframes flash{0%{background:#fff3c4}100%{background:#fff}}
+/* 부수입 */
+.seg.kind{margin-bottom:2px}.seg.kind button{padding:8px 4px;font-size:14px}
+.seg.kind button[data-k="inc"][aria-pressed="true"]{background:var(--green);border-color:#000;color:#fff}
+#form.incmode{background:linear-gradient(#eef8e8,#eef8e8) padding-box}
+#fDest{flex-wrap:wrap}#fDest button{flex:1 1 40%;white-space:nowrap}
+#fDest button[aria-pressed="true"]{background:var(--green)}
+.lrow.plus{background:#f0f8ea}.lrow.plus .t span{color:#2f7d2b}

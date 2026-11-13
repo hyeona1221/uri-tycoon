@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=16">
+<link rel="stylesheet" href="style.css?v=17">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -147,6 +147,10 @@
               <label class="btn gray scanbtn"><input type="file" id="scanPick" accept="image/*" hidden>🖼 사진에서 고르기</label>
             </div>
             <p class="scanmsg" id="scanMsg" hidden></p>
+            <div class="seg kind" id="fKind" role="group" aria-label="지출 또는 부수입">
+              <button type="button" data-k="exp" aria-pressed="true">💸 지출</button>
+              <button type="button" data-k="inc" aria-pressed="false">🥕 부수입 (당근 판매 등)</button>
+            </div>
             <div class="row">
               <input class="field" id="fDate" type="date" aria-label="날짜">
               <input class="field" id="fPlace" placeholder="사용처 (예: 하나로마트)" aria-label="사용처">
@@ -154,6 +158,13 @@
             <div class="places" id="fPlaces" role="group" aria-label="자주 쓰는 사용처"></div>
             <input class="field amt" id="fAmt" inputmode="numeric" placeholder="금액" aria-label="금액">
             <div class="depts" id="fDepts" role="group" aria-label="부서"></div>
+            <div id="fDestBox" hidden>
+              <div class="seg" id="fDest" role="group" aria-label="넣을 곳">
+                <button type="button" data-d="month" aria-pressed="true">이번 달 생활비에 더하기</button>
+                <button type="button" data-d="vault" aria-pressed="false">금고에 바로 넣기</button>
+              </div>
+              <p class="hint" id="fDestHint"></p>
+            </div>
             <div class="seg" id="fMethod" role="group" aria-label="결제수단">
               <button type="button" data-m="하나카드" aria-pressed="true">하나카드</button>
               <button type="button" data-m="토스뱅크" aria-pressed="false">토스뱅크</button>
@@ -236,7 +247,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=16"></script>
-<script src="app.js?v=16"></script>
+<script src="config.js?v=17"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>
