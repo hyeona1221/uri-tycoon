@@ -256,3 +256,8 @@ table.hist td{padding:6px 4px;border-bottom:1px solid #d3cab3;text-align:right;f
 #fDest{flex-wrap:wrap}#fDest button{flex:1 1 40%;white-space:nowrap}
 #fDest button[aria-pressed="true"]{background:var(--green)}
 .lrow.plus{background:#f0f8ea}.lrow.plus .t span{color:#2f7d2b}
+/* 장부 검색 */
+.lsearch{position:relative;margin-bottom:6px}.lsearch .field{width:100%;padding-right:40px}
+.lsearch button{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:#fff;border:2px solid #000;border-radius:3px;width:28px;height:28px;font-size:13px;line-height:1}
+#lSearchSum{margin:0 0 6px;color:var(--ink);font-weight:500}
+#lSearch::-webkit-search-cancel-button{display:none;-webkit-appearance:none}

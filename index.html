@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=18">
+<link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -185,6 +185,11 @@
         </section>
         <section class="paper card">
           <h2>결재 장부 <small id="ledgerCount"></small></h2>
+          <div class="lsearch">
+            <input class="field" id="lSearch" type="search" placeholder="🔍 검색 (사용처, 메모, 부서, 금액, 11월…)" aria-label="소비내역 검색" autocomplete="off">
+            <button type="button" id="lSearchX" aria-label="검색 지우기" hidden>✕</button>
+          </div>
+          <p class="hint" id="lSearchSum" hidden></p>
           <div class="ledger" id="ledger"></div>
         </section>
       </div>
@@ -247,7 +252,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=18"></script>
-<script src="app.js?v=18"></script>
+<script src="config.js?v=19"></script>
+<script src="app.js?v=19"></script>
 </body>
 </html>

@@ -174,7 +174,7 @@ function setDest(d){dest=d;$('fDest').querySelectorAll('button').forEach(b=>b.se
 $('fKind').onclick=e=>{const k=e.target.closest('button')?.dataset.k;if(k&&!editId&&!editInc)setKind(k)};
 $('fDest').onclick=e=>{const d=e.target.closest('button')?.dataset.d;if(d)setDest(d)};
 function incRow(x){const r=document.createElement('div');r.className='lrow plus';
-  const dd=document.createElement('span');dd.className='d';dd.textContent=`${+x.date.slice(5,7)}/${+x.date.slice(8)}`;
+  const dd=document.createElement('span');dd.className='d';dd.textContent=shortDate(x.date);
   const dot=document.createElement('span');dot.className='dot';dot.style.background='var(--green)';
   const t=document.createElement('div');t.className='t';const b=document.createElement('b');b.textContent=x.place||'부수입';const s=document.createElement('span');s.textContent=`부수입 → ${x.to==='vault'?'금고':'생활비'}${x.memo?' · '+x.memo:''}`;t.append(b,s);
   const a=document.createElement('span');a.className='a pos';a.textContent='+'+x.amount.toLocaleString('ko-KR');
@@ -188,6 +188,14 @@ function incCheer(rec){play('income');burst(286,70,['#4fa64a','#9be38f','#f2b632
   if(carrot){const n=allInc().filter(x=>/당근/.test(x.place)).length;const badge=n>=30?'당근 마스터':n>=10?'중고왕':n>=3?'당근 새싹':'';
     toast(`당근 거래 성사! ${won(rec.amount)} ${rec.to==='vault'?'금고에 넣었어요':'생활비에 더했어요'}${badge?` · 누적 ${n}건 「${badge}」`:''}`)}
   else toast(`${won(rec.amount)} ${rec.to==='vault'?'금고에 넣었어요':'생활비에 더했어요'}`)}
+
+/* ---------- ledger search ---------- */
+const shortDate=d=>(d.slice(0,4)!==today.slice(0,4)?d.slice(2,4)+'.':'')+`${+d.slice(5,7)}/${+d.slice(8)}`;
+function searchHit(e,q){const d=DEPTS.find(x=>x.id===e.cat);
+  const hay=[e.place,e.memo,e.method,e.inc?'부수입 '+(e.to==='vault'?'금고':'생활비'):d?.n,e.inc?'':d?.team,e.amount,e.date,`${+e.date.slice(5,7)}월`].join(' ').toLowerCase();
+  return q.split(/\s+/).every(w=>{const n=w.replace(/[,원]/g,'');return hay.includes(w)||(n&&/^\d+$/.test(n)&&String(e.amount).includes(n))})}
+$('lSearch').addEventListener('input',()=>render());
+$('lSearchX').onclick=()=>{$('lSearch').value='';render();$('lSearch').focus()};
 
 /* ---------- render ---------- */
 function setBar(el,ratio,label,warnAt=.8){el.classList.toggle('over',ratio>1);el.classList.toggle('warn',ratio>=warnAt&&ratio<=1);el.querySelector('i').style.width=Math.min(100,ratio*100)+'%';el.querySelector('span').textContent=label}
@@ -233,11 +241,15 @@ function render(){
   const ch=$('chart');ch.textContent='';const sums=DEPTS.map(d=>({d,v:ex.filter(e=>e.cat===d.id).reduce((s,e)=>s+e.amount,0)})).sort((a,b)=>b.v-a.v);const mx=Math.max(1,...sums.map(s=>s.v));
   for(const {d,v} of sums){const r=document.createElement('div');r.className='crow';const n=document.createElement('span');n.textContent=d.n;const bar=document.createElement('div');bar.className='bar';const i=document.createElement('i');i.style.width=(v/mx*100)+'%';i.style.background=d.c;bar.appendChild(i);const val=document.createElement('span');val.className='v';val.textContent=v?`${Math.round(v/1000)}K · ${tot?Math.round(v/tot*100):0}%`:'-';r.append(n,bar,val);ch.appendChild(r)}
   // ledger
-  const L=$('ledger');L.textContent='';const incs=incOf(ym).map(x=>({...x,inc:true,p:ym}));const sorted=[...ex,...incs].sort((a,b)=>(b.date+(b.at||'')).localeCompare(a.date+(a.at||'')));
-  {const it=incAll(ym);$('ledgerCount').textContent=`${sorted.length}건`+(it?` · 부수입 +${it.toLocaleString('ko-KR')}`:'')}
-  if(!sorted.length){const e=document.createElement('div');e.className='empty';e.textContent='이번 달 결재 내역이 없어요. 위에서 품의서를 올려보세요.';L.appendChild(e)}
+  const L=$('ledger');L.textContent='';const q=$('lSearch').value.trim().toLowerCase();$('lSearchX').hidden=!q;
+  const pool=q?[...S.expenses,...allInc().map(x=>({...x,inc:true}))]:[...ex,...incOf(ym).map(x=>({...x,inc:true,p:ym}))];
+  const sorted=pool.filter(e=>!q||searchHit(e,q)).sort((a,b)=>(b.date+(b.at||'')).localeCompare(a.date+(a.at||'')));
+  if(q){const sp=sorted.filter(e=>!e.inc).reduce((s,e)=>s+e.amount,0),it=sorted.filter(e=>e.inc).reduce((s,e)=>s+e.amount,0);
+    $('ledgerCount').textContent=`검색 ${sorted.length}건`;$('lSearchSum').hidden=!sorted.length;$('lSearchSum').textContent='전체 기간에서 찾았어요'+(sp||!it?` · 지출 합계 ${won(sp)}`:'')+(it?` · 부수입 합계 +${won(it)}`:'')}
+  else{$('lSearchSum').hidden=true;const it=incAll(ym);$('ledgerCount').textContent=`${sorted.length}건`+(it?` · 부수입 +${it.toLocaleString('ko-KR')}`:'')}
+  if(!sorted.length){const e=document.createElement('div');e.className='empty';e.textContent=q?'검색 결과가 없어요. 다른 단어로 찾아보세요.':'이번 달 결재 내역이 없어요. 위에서 품의서를 올려보세요.';L.appendChild(e)}
   for(const e of sorted){if(e.inc){L.appendChild(incRow(e));continue}const d=DEPTS.find(x=>x.id===e.cat)||DEPTS[9];const r=document.createElement('div');r.className='lrow';
-    const dd=document.createElement('span');dd.className='d';dd.textContent=`${+e.date.slice(5,7)}/${+e.date.slice(8)}`;
+    const dd=document.createElement('span');dd.className='d';dd.textContent=shortDate(e.date);
     const dot=document.createElement('span');dot.className='dot';dot.style.background=d.c;
     const t=document.createElement('div');t.className='t';const b=document.createElement('b');b.textContent=e.place||d.n;const s=document.createElement('span');s.textContent=`${d.n} · ${e.method}${e.memo?' · '+e.memo:''}`;t.append(b,s);
     const a=document.createElement('span');a.className='a';a.textContent=e.amount.toLocaleString('ko-KR');
