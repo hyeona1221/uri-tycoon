@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=19">
+<link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -39,9 +39,16 @@
 </div>
 
 
+<div class="modal" id="achModal" hidden role="dialog" aria-modal="true" aria-labelledby="achTitle">
+  <div class="paper card achcard">
+    <h2 id="achTitle">업적</h2>
+    <div class="achlist" id="achList"></div>
+    <button class="btn" id="achClose" type="button">닫기</button>
+  </div>
+</div>
 <div class="app" id="app" hidden>
   <header class="hud">
-    <div class="frame lvl"><b>LV <span class="px" id="lv">1</span></b><div class="xp" id="xp" aria-hidden="true"></div></div>
+    <button class="frame lvl" id="lvBtn" type="button" title="업적 보기"><b>LV <span class="px" id="lv">1</span></b><div class="xp" id="xp" aria-hidden="true"></div><span class="trophy" aria-label="달성한 업적">🏆<span class="px" id="achCnt">0</span></span></button>
     <div class="frame status" id="status">재무 상태: <em class="mid">불러오는 중</em></div>
     <div class="frame money">
       <span class="coin" aria-hidden="true"></span><span class="px" id="hudVault" title="이월 금고">0</span>
@@ -58,7 +65,7 @@
     <button class="babybtn crawl" id="babyBtn" aria-label="신입사원 찬솔이와 놀기"><img id="baby" src="assets/chansol_crawl.png" alt=""></button>
     <span class="zzz" id="zzz" aria-hidden="true">z<i>z</i><b>z</b></span>
     <canvas id="fx" width="512" height="138" aria-hidden="true"></canvas>
-    <div class="cover bub" style="left:23.9%;top:24.6%;width:15.4%;height:21.4%">내 적금이랑 생활비<br>결재 올립니다!</div>
+    <div class="cover bub" id="wifeBub" style="left:23.9%;top:24.6%;width:15.4%;height:21.4%">내 적금이랑 생활비<br>결재 올립니다!</div>
     <div class="cover bub" style="left:63.6%;top:13.3%;width:14.1%;height:25%" id="bossBub">이번 달 생활비<br>100~120만 원!<br>아껴 쓰자!</div>
     <button class="sound cover" id="soundBtn" aria-pressed="true" style="left:85.6%;top:2%;width:13.6%;height:14.4%">소리 ON</button>
     <div class="cover tag gold" style="left:52.6%;top:63.6%;width:8.4%;height:14%" id="vaultTag">0원</div>
@@ -180,10 +187,29 @@
           </form>
         </section>
         <section class="paper card">
+          <div class="pnav" role="group" aria-label="보는 기간">
+            <button type="button" id="pPrev" aria-label="이전 기간">◀</button>
+            <b id="pLabel"></b>
+            <button type="button" id="pNext" aria-label="다음 기간">▶</button>
+          </div>
           <h2>부서별 지출 <small id="chartTotal"></small></h2>
           <div class="chart" id="chart"></div>
+          <button class="btn gray mini" id="bEdit" type="button">🎯 부서별 한도 설정</button>
+          <div class="bbox" id="bBox" hidden>
+            <div class="brows" id="bRows"></div>
+            <p class="hint" id="bSum"></p>
+            <div class="row">
+              <button class="btn" id="bSave" type="button">한도 저장</button>
+              <button class="btn gray" id="bCancel" type="button" style="flex:0 0 auto">닫기</button>
+            </div>
+          </div>
         </section>
         <section class="paper card">
+          <h2>달력 <small id="calInfo"></small></h2>
+          <div class="cal" id="cal"></div>
+          <p class="hint">날짜를 누르면 그날 내역만 장부에 보여요. 💎는 무지출 데이예요.</p>
+        </section>
+        <section class="paper card" id="ledgerCard">
           <h2>결재 장부 <small id="ledgerCount"></small></h2>
           <div class="lsearch">
             <input class="field" id="lSearch" type="search" placeholder="🔍 검색 (사용처, 메모, 부서, 금액, 11월…)" aria-label="소비내역 검색" autocomplete="off">
@@ -191,6 +217,7 @@
           </div>
           <p class="hint" id="lSearchSum" hidden></p>
           <div class="ledger" id="ledger"></div>
+          <p class="hint">줄을 누르면 수정·삭제 버튼이 나와요.</p>
         </section>
       </div>
 
@@ -232,7 +259,7 @@
         </section>
         <section class="paper card">
           <h2>월별 정산</h2>
-          <div class="scroll"><table class="hist" id="hist"></table></div>
+          <div class="histl" id="hist"></div>
           <p class="hint">남은 돈 = 받은 돈 − 고정비 − 변동비 · 기간은 25일 ~ 다음 달 24일</p>
         </section>
         <section class="paper card">
@@ -252,7 +279,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=19"></script>
-<script src="app.js?v=19"></script>
+<script src="config.js?v=20"></script>
+<script src="app.js?v=20"></script>
 </body>
 </html>
