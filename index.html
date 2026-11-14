@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=21">
+<link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -42,13 +42,14 @@
 <div class="modal" id="achModal" hidden role="dialog" aria-modal="true" aria-labelledby="achTitle">
   <div class="paper card achcard">
     <h2 id="achTitle">업적</h2>
+    <p class="hint" id="rankInfo"></p>
     <div class="achlist" id="achList"></div>
     <button class="btn" id="achClose" type="button">닫기</button>
   </div>
 </div>
 <div class="app" id="app" hidden>
   <header class="hud">
-    <button class="frame lvl" id="lvBtn" type="button" title="업적 보기"><b>LV <span class="px" id="lv">1</span></b><div class="xp" id="xp" aria-hidden="true"></div><span class="trophy" aria-label="달성한 업적">🏆<span class="px" id="achCnt">0</span></span></button>
+    <button class="frame lvl" id="lvBtn" type="button" title="업적 보기"><b>LV <span class="px" id="lv">1</span></b><div class="xp" id="xp" aria-hidden="true"></div><span class="rank" id="rank">인턴</span></button>
     <div class="frame status" id="status">재무 상태: <em class="mid">불러오는 중</em></div>
     <div class="frame money">
       <span class="coin" aria-hidden="true"></span><span class="px" id="hudVault" title="이월 금고">0</span>
@@ -61,10 +62,14 @@
   <section class="scene" id="scene" aria-label="우리집 자산관리 사무실">
     <div class="stage" id="stage">
     <img src="assets/office.webp" alt="도트 사무실: 컴퓨터 앞 에이스 사원, 큰 책상의 대표이사, 매트 위 신입사원, 침대에서 자는 인턴 초아, 이월 금고" width="1024" height="275">
+    <canvas id="deco" width="1024" height="275" aria-hidden="true"></canvas>
     <button class="dogbtn" id="dogBtn" aria-label="인턴 초아 쓰다듬기"><img id="dog" src="assets/choa_sleep.png" alt=""></button>
     <button class="babybtn crawl" id="babyBtn" aria-label="신입사원 찬솔이와 놀기"><img id="baby" src="assets/chansol_crawl.png" alt=""></button>
     <span class="zzz" id="zzz" aria-hidden="true">z<i>z</i><b>z</b></span>
+    <i class="win wl" aria-hidden="true"></i><i class="win wr" aria-hidden="true"></i>
+    <div id="tod" aria-hidden="true"></div><div id="lampGlow" aria-hidden="true"></div>
     <canvas id="fx" width="512" height="138" aria-hidden="true"></canvas>
+    <div class="cover tag gold" id="payTag" style="left:1%;top:3%;width:9%;height:12%" hidden>💰 월급날!</div>
     <div class="cover bub" id="wifeBub" style="left:23.9%;top:24.6%;width:15.4%;height:21.4%">내 적금이랑 생활비<br>결재 올립니다!</div>
     <div class="cover bub" style="left:63.6%;top:13.3%;width:14.1%;height:25%" id="bossBub">이번 달 생활비<br>100~120만 원!<br>아껴 쓰자!</div>
     <button class="sound cover" id="soundBtn" aria-pressed="true" style="left:85.6%;top:2%;width:13.6%;height:14.4%">소리 ON</button>
@@ -77,7 +82,37 @@
     <button class="role" role="tab" data-r="boss" aria-selected="false">남편탭 (대표이사)</button>
   </div>
 
-  <div class="bossview" id="bossView" hidden>
+  <div id="bossView" hidden>
+  <div class="bsub frame" role="tablist" aria-label="남편탭 메뉴">
+    <button type="button" class="bsubtab" role="tab" data-b="main" aria-selected="true">급여 · 생활비 송금</button>
+    <button type="button" class="bsubtab" role="tab" data-b="pocket" aria-selected="false">내 용돈</button>
+  </div>
+  <div class="bossview" id="bPocket" hidden>
+    <section class="paper card">
+      <h2>남편 용돈 <small id="hpPeriod"></small></h2>
+      <div class="sendbig px" id="hpLeft">0원</div>
+      <div class="pbar" id="hpBar"><i></i><span></span></div>
+      <p class="hint" id="hpHint"></p>
+    </section>
+    <section class="paper card">
+      <h2>용돈 지출 기록</h2>
+      <form id="hpForm" autocomplete="off">
+        <div class="row">
+          <input class="field" id="hpDate" type="date" aria-label="날짜">
+          <input class="field" id="hpPlace" placeholder="어디에 썼나요? (예: 점심)" aria-label="사용처">
+        </div>
+        <input class="field amt" id="hpAmt" inputmode="numeric" placeholder="금액" aria-label="금액">
+        <input class="field" id="hpMemo" placeholder="메모 (선택)" aria-label="메모">
+        <button class="btn blue" type="submit">용돈에서 쓰기</button>
+      </form>
+    </section>
+    <section class="paper card sendcard">
+      <h2>용돈 장부 <small id="hpCount"></small></h2>
+      <div class="ledger" id="hpList"></div>
+      <p class="hint">여기 적은 지출은 생활비나 아내 부서별 지출에 합쳐지지 않아요. 줄을 누르면 삭제 버튼이 나와요.</p>
+    </section>
+  </div>
+  <div class="bossview" id="bMain">
     <section class="paper card">
       <h2>수입 (+) <small id="bPeriod"></small></h2>
       <div class="inc" id="bIncome"></div>
@@ -96,12 +131,17 @@
       <button class="fxrow sendrow" id="bSendBtn" type="button"></button>
       <p class="hint" id="bSendHint"></p>
     </section>
+    <section class="paper card sendcard">
+      <h2>대표이사 칭찬 도장 <small id="prCount"></small></h2>
+      <button class="btn praisebtn" id="prBtn" type="button" disabled>🎖️ 대표이사 칭찬 도장 보내기</button>
+      <p class="hint" id="prHint"></p>
+    </section>
+  </div>
   </div>
 
   <div class="main" id="wifeMain">
     <nav class="frame side" role="tablist" aria-label="메뉴">
       <button class="tab" role="tab" data-v="office" aria-selected="true" aria-label="사무실"><span class="lg">사무실</span><span class="sm">사무실</span></button>
-      <button class="tab" role="tab" data-v="fixed" aria-selected="false" aria-label="고정비 결재"><span class="lg">고정비 결재</span><span class="sm">고정비</span></button>
       <button class="tab" role="tab" data-v="var" aria-selected="false" aria-label="변동비 관리"><span class="lg">변동비 관리</span><span class="sm">변동비</span></button>
       <button class="tab" role="tab" data-v="dept" aria-selected="false" aria-label="부서별 지출"><span class="lg">부서별 지출</span><span class="sm">부서별</span></button>
       <button class="tab" role="tab" data-v="cal" aria-selected="false" aria-label="달력"><span class="lg">달력</span><span class="sm">달력</span></button>
@@ -115,6 +155,10 @@
           <h2>받은 돈에서 내야 할 것 <small id="oFxCount"></small></h2>
           <div class="pbar" id="oFxBar"><i></i><span></span></div>
           <div class="fx" id="oFx" style="margin-top:6px"></div>
+          <p class="hint">빠져나가거나 이체하면 눌러서 결재 도장을 찍어요. 결재 안 된 항목 금액은 예약금으로 묶여요.</p>
+          <h2 style="margin-top:14px">이번 달 받은 돈 <small id="recvPeriod">남편이 보낸 돈</small></h2>
+          <div class="row"><input class="field amt" id="recvIn" inputmode="numeric" placeholder="0" aria-label="받은 돈"><button class="btn" id="recvSave" type="button" style="flex:0 0 auto">저장</button></div>
+          <div class="kv" id="fKv" style="margin-top:10px"></div>
         </section>
         <section class="paper card">
           <h2>이번 달 변동비 <small id="oMonth"></small></h2>
@@ -127,22 +171,8 @@
             <button class="btn blue" id="noSpendBtn" style="font-size:15px;padding:6px 12px">오늘 무지출 데이 선언</button>
             <span>이번 달 <b class="combo" id="nsCount">0</b>일 · 콤보 <b class="combo" id="nsCombo">0</b></span>
           </div>
-          <button class="btn gray achbtn" id="achBtn2" type="button">🏆 업적 보기 <span id="achCnt2"></span></button>
-        </section>
-      </div>
-
-      <!-- FIXED -->
-      <div class="view" data-view="fixed" hidden>
-        <section class="paper card">
-          <h2>이번 달 받은 돈 <small id="recvPeriod">남편이 보낸 돈</small></h2>
-          <div class="row"><input class="field amt" id="recvIn" inputmode="numeric" placeholder="0" aria-label="받은 돈"><button class="btn" id="recvSave" type="button" style="flex:0 0 auto">저장</button></div>
-          <div class="kv" id="fKv" style="margin-top:10px"></div>
-        </section>
-        <section class="paper card">
-          <h2>고정비 결재 <small id="fCount"></small></h2>
-          <div class="pbar" id="fBar"><i></i><span></span></div>
-          <div class="fx" id="fFx" style="margin-top:6px"></div>
-          <p class="hint">빠져나가거나 이체하면 눌러서 결재 도장을 찍어요. 결재 안 된 항목 금액은 예약금으로 묶여요.</p>
+          <button class="btn gray achbtn" id="achBtn2" type="button">🏆 업적·책상 아이템 보기 <span id="achCnt2"></span></button>
+          <p class="praiseinfo" id="praiseInfo"></p>
         </section>
       </div>
 
@@ -180,6 +210,16 @@
               <button type="button" data-m="토스뱅크" aria-pressed="false">토스뱅크</button>
               <button type="button" data-m="우리은행" aria-pressed="false">우리은행</button>
               <button type="button" data-m="기업은행" aria-pressed="false">기업은행</button>
+            </div>
+            <div id="fInstBox">
+              <div class="seg" id="fInst" role="group" aria-label="할부">
+                <button type="button" data-n="1" aria-pressed="true">일시불</button>
+                <button type="button" data-n="2" aria-pressed="false">2개월</button>
+                <button type="button" data-n="3" aria-pressed="false">3개월</button>
+                <button type="button" data-n="6" aria-pressed="false">6개월</button>
+                <button type="button" data-n="12" aria-pressed="false">12개월</button>
+              </div>
+              <p class="hint" id="fInstHint" hidden></p>
             </div>
             <input class="field" id="fMethodCustom" placeholder="결제수단 직접 입력 (예: 현금, 지역화폐)" aria-label="결제수단 직접 입력">
             <input class="field" id="fMemo" placeholder="메모 (선택)" aria-label="메모">
@@ -300,7 +340,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=21"></script>
-<script src="app.js?v=21"></script>
+<script src="config.js?v=22"></script>
+<script src="app.js?v=22"></script>
 </body>
 </html>

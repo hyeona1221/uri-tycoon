@@ -12,6 +12,8 @@ create table if not exists public.expenses (
   id uuid primary key default gen_random_uuid(),
   date date not null default current_date,
   cat text not null,               -- food, dine, baby, choa, home, car, med, self, gift, etc
+                                   -- 'pocket' = 남편 용돈 지출 (생활비 계산에서 제외)
+                                   -- 할부는 한 건을 N개 행으로 저장: id 앞부분이 같고 memo 가 '[할부 k/N]' 으로 시작
   place text not null default '',
   amount integer not null check (amount > 0),
   method text not null default '카드',  -- 카드 / 지역화폐 / 현금
@@ -36,7 +38,8 @@ create table if not exists public.fixed_items (
 create table if not exists public.months (
   ym text primary key,             -- 예: 2026-12
   received integer not null default 0,
-  paid jsonb not null default '{}'::jsonb,   -- 아내 고정비 도장 {"lgu": true, ...} + 남편탭 기록 {"h": {salary, bonus, salaryOk, bonusOk, ded, sent, sentAmount}}
+  paid jsonb not null default '{}'::jsonb,   -- 아내 고정비 도장 {"lgu": true, ...}
+                                             -- + h: 남편탭 기록, v: 금고 입출금, i: 부수입, b: 부서별 한도, pr: 대표이사 칭찬 도장
   updated_at timestamptz not null default now()
 );
 

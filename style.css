@@ -312,3 +312,31 @@ button.lvl{cursor:pointer;font:inherit;text-align:left}
 .tab .sm{display:none}
 @media (max-width:760px){.tab .lg{display:none}.tab .sm{display:inline}.side{gap:4px}.tab{font-size:13px;padding:8px 0;min-width:0;white-space:nowrap}}
 .achbtn{width:100%;margin-top:8px;font-size:15px;padding:8px}
+/* v22: 남편 용돈, 할부, 칭찬 도장, 시간대, 직급·아이템 */
+.scene #deco{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none}
+#tod{position:absolute;inset:0;pointer-events:none;transition:background 1.2s}
+.win{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.2s}
+.win.wl{clip-path:polygon(9.5% 39.5%,20.2% 23%,20.2% 43.5%,9.5% 55%)}
+.win.wr{clip-path:polygon(82% 19%,92.3% 33.5%,92.3% 61%,86.6% 54.5%,86.6% 37%,84.2% 33%,82% 36%)}
+#lampGlow{position:absolute;left:28.4%;top:76%;width:20%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,216,130,.6),rgba(255,216,130,.18) 40%,rgba(255,216,130,0) 68%);mix-blend-mode:screen;opacity:0;pointer-events:none;transition:opacity 1.2s}
+.stage[data-tod="eve"] .win{opacity:.78;background:linear-gradient(#141c5a 0%,#3b2a78 55%,#c56a4a 100%)}
+.stage[data-tod="eve"] #tod{background:radial-gradient(ellipse 55% 80% at 50% 0%,rgba(255,206,120,.2),rgba(255,206,120,0) 70%),rgba(44,28,84,.2)}
+.stage[data-tod="night"] .win{opacity:.93;background:#060a26}
+.stage[data-tod="night"] #tod{background:radial-gradient(circle at 28.4% 76%,rgba(8,12,40,0) 0%,rgba(8,12,40,.16) 6%,rgba(8,12,40,.68) 22%)}
+.stage[data-tod="night"] #lampGlow{opacity:1}
+#payTag{animation:paypulse 1.2s steps(2) infinite}
+@keyframes paypulse{50%{background:#ffe58a}}
+@media (prefers-reduced-motion:reduce){#payTag{animation:none}#tod,.win,#lampGlow{transition:none}}
+.rank{margin-left:auto;font-family:var(--hd);font-size:14px;background:var(--gold);color:#1c1c1c;border:2px solid #000;border-radius:3px;padding:0 6px;white-space:nowrap}
+.lvl .xp i{width:5px}
+.bsub{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px;margin-bottom:8px}
+.bsubtab{background:var(--frame2);color:#f3efe4;border:3px solid var(--edge);border-radius:4px;padding:8px 6px;font-family:var(--hd);font-size:15px;box-shadow:inset 0 -3px 0 #23262f}
+.bsubtab[aria-selected="true"]{background:#3f74c9;color:#fff;box-shadow:inset 0 -3px 0 #284f91}
+#hpForm{display:flex;flex-direction:column;gap:8px}
+#hpLeft{color:#284f91}
+.praisebtn{width:100%}.praisebtn:disabled{background:#cfc8b6;box-shadow:inset 0 -4px 0 #a39c89;color:#7a7466;cursor:not-allowed}
+.praiseinfo{margin:8px 0 0;font-size:13px;font-weight:500;color:#9a6a00;text-align:center}
+#fInst{flex-wrap:wrap}#fInst button{flex:1 1 17%;min-width:0;white-space:nowrap;padding:6px 2px}
+.itag{font-style:normal;font-size:10px;font-weight:500;background:var(--blue);color:#fff;border-radius:2px;padding:1px 5px;vertical-align:1px;white-space:nowrap}
+.achsub{margin:14px 0 4px;padding-top:8px}
+.itemic{width:34px;height:34px;image-rendering:pixelated;flex:none}
