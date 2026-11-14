@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=20">
+<link rel="stylesheet" href="style.css?v=21">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -100,11 +100,13 @@
 
   <div class="main" id="wifeMain">
     <nav class="frame side" role="tablist" aria-label="메뉴">
-      <button class="tab" role="tab" data-v="office" aria-selected="true">사무실</button>
-      <button class="tab" role="tab" data-v="fixed" aria-selected="false">고정비 결재</button>
-      <button class="tab" role="tab" data-v="var" aria-selected="false">변동비 관리</button>
-      <button class="tab" role="tab" data-v="pay" aria-selected="false">결제수단</button>
-      <button class="tab" role="tab" data-v="vault" aria-selected="false">이월 금고</button>
+      <button class="tab" role="tab" data-v="office" aria-selected="true" aria-label="사무실"><span class="lg">사무실</span><span class="sm">사무실</span></button>
+      <button class="tab" role="tab" data-v="fixed" aria-selected="false" aria-label="고정비 결재"><span class="lg">고정비 결재</span><span class="sm">고정비</span></button>
+      <button class="tab" role="tab" data-v="var" aria-selected="false" aria-label="변동비 관리"><span class="lg">변동비 관리</span><span class="sm">변동비</span></button>
+      <button class="tab" role="tab" data-v="dept" aria-selected="false" aria-label="부서별 지출"><span class="lg">부서별 지출</span><span class="sm">부서별</span></button>
+      <button class="tab" role="tab" data-v="cal" aria-selected="false" aria-label="달력"><span class="lg">달력</span><span class="sm">달력</span></button>
+      <button class="tab" role="tab" data-v="pay" aria-selected="false" aria-label="결제수단"><span class="lg">결제수단</span><span class="sm">결제</span></button>
+      <button class="tab" role="tab" data-v="vault" aria-selected="false" aria-label="이월 금고"><span class="lg">이월 금고</span><span class="sm">금고</span></button>
     </nav>
     <div class="panels">
       <!-- OFFICE -->
@@ -125,6 +127,7 @@
             <button class="btn blue" id="noSpendBtn" style="font-size:15px;padding:6px 12px">오늘 무지출 데이 선언</button>
             <span>이번 달 <b class="combo" id="nsCount">0</b>일 · 콤보 <b class="combo" id="nsCombo">0</b></span>
           </div>
+          <button class="btn gray achbtn" id="achBtn2" type="button">🏆 업적 보기 <span id="achCnt2"></span></button>
         </section>
       </div>
 
@@ -186,11 +189,30 @@
             </div>
           </form>
         </section>
+        <section class="paper card" id="ledgerCard">
+          <div class="pnav" role="group" aria-label="보는 기간">
+            <button type="button" data-pprev aria-label="이전 기간">◀</button>
+            <b data-plabel></b>
+            <button type="button" data-pnext aria-label="다음 기간">▶</button>
+          </div>
+          <h2>결재 장부 <small id="ledgerCount"></small></h2>
+          <div class="lsearch">
+            <input class="field" id="lSearch" type="search" placeholder="🔍 검색 (사용처, 메모, 부서, 금액, 11월…)" aria-label="소비내역 검색" autocomplete="off">
+            <button type="button" id="lSearchX" aria-label="검색 지우기" hidden>✕</button>
+          </div>
+          <p class="hint" id="lSearchSum" hidden></p>
+          <div class="ledger" id="ledger"></div>
+          <p class="hint">줄을 누르면 수정·삭제 버튼이 나와요.</p>
+        </section>
+      </div>
+
+      <!-- DEPARTMENTS -->
+      <div class="view" data-view="dept" hidden>
         <section class="paper card">
           <div class="pnav" role="group" aria-label="보는 기간">
-            <button type="button" id="pPrev" aria-label="이전 기간">◀</button>
-            <b id="pLabel"></b>
-            <button type="button" id="pNext" aria-label="다음 기간">▶</button>
+            <button type="button" data-pprev aria-label="이전 기간">◀</button>
+            <b data-plabel></b>
+            <button type="button" data-pnext aria-label="다음 기간">▶</button>
           </div>
           <h2>부서별 지출 <small id="chartTotal"></small></h2>
           <div class="chart" id="chart"></div>
@@ -204,20 +226,19 @@
             </div>
           </div>
         </section>
+      </div>
+
+      <!-- CALENDAR -->
+      <div class="view" data-view="cal" hidden>
         <section class="paper card">
+          <div class="pnav" role="group" aria-label="보는 기간">
+            <button type="button" data-pprev aria-label="이전 기간">◀</button>
+            <b data-plabel></b>
+            <button type="button" data-pnext aria-label="다음 기간">▶</button>
+          </div>
           <h2>달력 <small id="calInfo"></small></h2>
           <div class="cal" id="cal"></div>
-          <p class="hint">날짜를 누르면 그날 내역만 장부에 보여요. 💎는 무지출 데이예요.</p>
-        </section>
-        <section class="paper card" id="ledgerCard">
-          <h2>결재 장부 <small id="ledgerCount"></small></h2>
-          <div class="lsearch">
-            <input class="field" id="lSearch" type="search" placeholder="🔍 검색 (사용처, 메모, 부서, 금액, 11월…)" aria-label="소비내역 검색" autocomplete="off">
-            <button type="button" id="lSearchX" aria-label="검색 지우기" hidden>✕</button>
-          </div>
-          <p class="hint" id="lSearchSum" hidden></p>
-          <div class="ledger" id="ledger"></div>
-          <p class="hint">줄을 누르면 수정·삭제 버튼이 나와요.</p>
+          <p class="hint">날짜를 누르면 변동비 탭의 장부로 가서 그날 내역만 보여줘요. 💎는 무지출 데이예요.</p>
         </section>
       </div>
 
@@ -279,7 +300,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=20"></script>
-<script src="app.js?v=20"></script>
+<script src="config.js?v=21"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>

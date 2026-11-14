@@ -308,3 +308,7 @@ button.lvl{cursor:pointer;font:inherit;text-align:left}
 .ach.done .pb i{background:var(--gold)}
 .lvl b{white-space:nowrap}
 @media (max-width:480px){.lvl .xp i{width:5px}.hud .frame.lvl{gap:6px;padding:6px 8px}}
+/* v21: 탭 7개 */
+.tab .sm{display:none}
+@media (max-width:760px){.tab .lg{display:none}.tab .sm{display:inline}.side{gap:4px}.tab{font-size:13px;padding:8px 0;min-width:0;white-space:nowrap}}
+.achbtn{width:100%;margin-top:8px;font-size:15px;padding:8px}

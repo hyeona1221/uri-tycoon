@@ -206,8 +206,8 @@ function incCheer(rec){play('income');burst(286,70,['#4fa64a','#9be38f','#f2b632
 
 /* ---------- viewed period (장부·그래프·달력) ---------- */
 let vm=ym;
-$('pPrev').onclick=()=>{const ms=monthsList().filter(k=>k<vm);if(ms.length){vm=ymShift(vm,-1);if(vm<ms[0])vm=ms[0];render()}};
-$('pNext').onclick=()=>{if(vm<ym){vm=ymShift(vm,1);render()}};
+document.querySelectorAll('[data-pprev]').forEach(b=>b.onclick=()=>{const ms=monthsList().filter(k=>k<vm);if(ms.length){vm=ymShift(vm,-1);if(vm<ms[0])vm=ms[0];render()}});
+document.querySelectorAll('[data-pnext]').forEach(b=>b.onclick=()=>{if(vm<ym){vm=ymShift(vm,1);render()}});
 function rowToggle(r){r.tabIndex=0;r.setAttribute('role','button');const tg=()=>{const on=!r.classList.contains('open');r.parentElement.querySelectorAll('.lrow.open').forEach(x=>x.classList.remove('open'));r.classList.toggle('open',on)};
   r.addEventListener('click',e=>{if(e.target.closest('button'))return;tg()});r.addEventListener('keydown',e=>{if(e.target===r&&(e.key==='Enter'||e.key===' ')){e.preventDefault();tg()}})}
 
@@ -223,7 +223,7 @@ function renderCal(ex){const C=$('cal');C.textContent='';const [a,b]=periodRange
     else if(ns.has(k)){nsN++;const g=document.createElement('span');g.className='gm';g.textContent='💎';c.appendChild(g)}
     if(incDay[k]){const v=document.createElement('span');v.className='in';v.textContent='+'+Math.round(incDay[k]/1000)+'K';c.appendChild(v)}
     c.setAttribute('aria-label',`${t.getMonth()+1}월 ${t.getDate()}일`+(byDay[k]?` 지출 ${won(byDay[k])}`:ns.has(k)?' 무지출':'')+(incDay[k]?` 부수입 ${won(incDay[k])}`:''));
-    c.onclick=()=>{$('lSearch').value=q===k?'':k;render();if(q!==k)$('ledgerCard').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})};C.appendChild(c)}
+    c.onclick=()=>{$('lSearch').value=k;go('var');render();$('ledgerCard').scrollIntoView({behavior:'auto',block:'start'})};C.appendChild(c)}
   $('calInfo').textContent=`지출한 날 ${dayN}일 · 무지출 ${nsN}일`}
 
 /* ---------- dept budgets ---------- */
@@ -252,7 +252,7 @@ function achievements(){const closed=monthsList().filter(k=>k<ym),black=closed.f
    ['v100','🏦','금고 100만','이월 금고 100만원',v,1000000],['v500','💰','금고 500만','이월 금고 500만원',v,5000000],
   ].map(([id,icon,n,desc,cur,goal])=>({id,icon,n,desc,cur:Math.max(0,cur),goal,done:cur>=goal}))}
 let achT=0;
-function checkAch(){if(!loaded)return;const a=achievements(),got=a.filter(x=>x.done).map(x=>x.id);$('achCnt').textContent=got.length;let seen=null;try{seen=JSON.parse(localStorage.getItem('uri-ach'))}catch(e){}
+function checkAch(){if(!loaded)return;const a=achievements(),got=a.filter(x=>x.done).map(x=>x.id);$('achCnt').textContent=got.length;$('achCnt2').textContent=`(${got.length}/${a.length})`;let seen=null;try{seen=JSON.parse(localStorage.getItem('uri-ach'))}catch(e){}
   if(!Array.isArray(seen)){try{localStorage.setItem('uri-ach',JSON.stringify(got))}catch(e){}return}
   const fresh=got.filter(id=>!seen.includes(id));if(!fresh.length)return;try{localStorage.setItem('uri-ach',JSON.stringify([...new Set([...seen,...got])]))}catch(e){}
   const x=a.find(y=>y.id===fresh[0]);clearTimeout(achT);achT=setTimeout(()=>{play('fanfare');burst(256,60,['#f2b632','#ffd96a','#7fe3ff']);toast(`업적 달성! ${x.icon} ${x.n}`+(fresh.length>1?` 외 ${fresh.length-1}개`:''))},1100)}
@@ -261,7 +261,7 @@ function achOpen(){const a=achievements(),L=$('achList');L.textContent='';$('ach
     const t=document.createElement('div');t.className='t';const b=document.createElement('b');b.textContent=x.n;const d=document.createElement('span');const fmt=v=>x.goal>=10000?man(v):v;d.textContent=x.desc+(x.done?' · 달성!':` · ${fmt(Math.min(x.cur,x.goal))}/${fmt(x.goal)}`);
     const pb=document.createElement('div');pb.className='pb';const pi=document.createElement('i');pi.style.width=Math.min(100,x.cur/x.goal*100)+'%';pb.appendChild(pi);t.append(b,d,pb);r.append(ic,t);L.appendChild(r)}
   $('achModal').hidden=false;$('achClose').focus()}
-$('lvBtn').onclick=achOpen;$('achClose').onclick=()=>{$('achModal').hidden=true;$('lvBtn').focus()};
+$('lvBtn').onclick=achOpen;$('achBtn2').onclick=achOpen;$('achClose').onclick=()=>{$('achModal').hidden=true;$('lvBtn').focus()};
 $('achModal').addEventListener('click',e=>{if(e.target===$('achModal'))$('achModal').hidden=true});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('achModal').hidden)$('achModal').hidden=true});
 
@@ -314,7 +314,7 @@ function render(){
   const spentToday=S.expenses.some(e=>e.date===today);$('noSpendBtn').disabled=spentToday||S.noSpend.includes(today);$('noSpendBtn').textContent=S.noSpend.includes(today)?'오늘 무지출 달성 중':spentToday?'오늘은 지출이 있어요':'오늘 무지출 데이 선언';
   // chart
   const ex=exOf(vm);const tot=ex.reduce((s,e)=>s+e.amount,0);$('chartTotal').textContent=`합계 ${won(tot)}`;
-  {const ms=monthsList();$('pLabel').textContent=periodLabel(vm,true)+(vm===ym?' (이번 달)':' (지난 기록)');$('pPrev').disabled=vm<=ms[0];$('pNext').disabled=vm>=ym}
+  {const ms=monthsList(),lab=periodLabel(vm,true)+(vm===ym?' (이번 달)':' (지난 기록)');document.querySelectorAll('[data-plabel]').forEach(e=>e.textContent=lab);document.querySelectorAll('[data-pprev]').forEach(e=>e.disabled=vm<=ms[0]);document.querySelectorAll('[data-pnext]').forEach(e=>e.disabled=vm>=ym)}
   const B=budgets(vm),pv=ymShift(vm,-1),pex=exOf(pv),K=v=>Math.round(v/1000)+'K';
   const ch=$('chart');ch.textContent='';const sums=DEPTS.map(d=>({d,v:ex.filter(e=>e.cat===d.id).reduce((s,e)=>s+e.amount,0),pv:pex.filter(e=>e.cat===d.id).reduce((s,e)=>s+e.amount,0),lim:B[d.id]||0})).sort((a,b)=>b.v-a.v);const mx=Math.max(1,...sums.map(s=>s.v));
   for(const {d,v,pv:pvv,lim} of sums){const r=document.createElement('div');r.className='crow';const n=document.createElement('span');n.textContent=d.n;const bar=document.createElement('div');bar.className='bar';const i=document.createElement('i');
