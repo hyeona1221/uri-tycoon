@@ -357,3 +357,4 @@ button.lvl{cursor:pointer;font:inherit;text-align:left}
 .lrow.adv .acts{display:none;grid-column:1/-1;justify-content:flex-end;gap:6px;align-items:center}
 .lrow.adv.open{background:#eef3ff}.lrow.adv.open .acts{display:flex}
 .lrow.adv .acts .field{width:120px;padding:5px 8px;font-size:14px}.lrow.adv .acts button.ok{background:var(--blue);color:#fff}
+@media (max-width:420px){#fMethod button{font-size:12px;padding:6px 0;letter-spacing:-.03em}}

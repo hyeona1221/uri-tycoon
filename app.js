@@ -197,7 +197,7 @@ function renderPlaces(){const box=$('fPlaces');box.textContent='';const cur=$('f
 $('fPlace').addEventListener('input',renderPlaces);
 
 /* ---------- state for form ---------- */
-const METHODS=['국민카드','하나카드','토스뱅크','우리은행','기업은행'];
+const METHODS=['국민카드','하나카드','토스뱅크','우리은행','네이버페이'];
 let selDept='food',method=METHODS[0],editId=null,kind='exp',dest='month',editInc=null;
 const DEST_HINT={month:'이번 달 남은 돈과 하루 권장 예산이 바로 늘어나요. 안 쓰고 남으면 마감 때 금고로 이월돼요.',vault:'이번 달 생활비는 그대로고, 금고 잔액만 늘어나요.'};
 function setKind(k){kind=k;const inc=k==='inc',adv=k==='adv';$('fAdvBox').hidden=!adv;$('form').classList.toggle('advmode',adv);
