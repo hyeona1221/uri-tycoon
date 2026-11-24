@@ -54,6 +54,9 @@ async function loadAll(){
       sb.from('fixed_items').upsert({id:'hana2',name:'하나은행 적금 (10만)',due:h.w||'',amount:100000,sort:8,active:true}),
       sb.from('fixed_items').update({sort:9}).eq('id','phone')]);
     if(!r.some(x=>x.error)){h.n='하나은행 적금 (20만)';h.a=200000;FIXED.splice(FIXED.indexOf(h)+1,0,{id:'hana2',n:'하나은행 적금 (10만)',w:h.w||'',a:100000})}}}
+  /* 한 번만: 11/25 기간부터 금고 0원으로 시작 (그 전은 살아보기). 잔액 맞추기 기록은 지움 */
+  if(ym>='2026-11'&&!Object.values(S.months).some(m=>m.paid&&'vstart' in m.paid)){const m=M('2026-11');const paid={...(m.paid||{}),vstart:true,v:(m.paid?.v||[]).filter(x=>!x.fix)};
+    const {error}=await sb.from('months').upsert({ym:'2026-11',received:m.received||0,paid,updated_at:new Date().toISOString()});if(!error)m.paid=paid}
   loaded=true;$('syncInfo').innerHTML='<span class="syncdot"></span>실시간 동기화 중 · 마지막 갱신 '+new Date().toLocaleTimeString('ko-KR');
 }
 let reloadT=0;
@@ -101,8 +104,10 @@ const advBackSum=x=>(x.back||[]).reduce((s,b)=>s+b.amount,0);
 const advLeft=x=>Math.max(0,advOthers(x)-advBackSum(x));
 const advNet=p=>advOf(p).reduce((s,x)=>s+advOthers(x),0)-allAdv().flatMap(x=>x.back||[]).filter(b=>periodOf(b.date)===p).reduce((s,b)=>s+b.amount,0);
 function surplus(m){return (S.months[m]?.received||0)-fxTotal()-spentOf(m)+monthAdj(m)+incMonth(m)-advNet(m)}
-function vaultNow(){return vaultBefore(ym)+allMoves().reduce((s,x)=>s+(x.type==='in'?x.amount:-x.amount),0)+allInc().filter(x=>x.to==='vault').reduce((s,x)=>s+x.amount,0)}
-function vaultBefore(m){return monthsList().filter(k=>k<m).reduce((s,k)=>s+surplus(k),0)}
+/* 금고 시작 기간: months.paid.vstart 가 true 인 가장 늦은 기간부터 금고를 0원으로 시작 (그 전 기간은 살아보기라 제외) */
+const vStart=()=>Object.keys(S.months).filter(k=>S.months[k]?.paid?.vstart).sort().pop()||'';
+function vaultNow(){const st=vStart();return vaultBefore(ym)+allMoves().filter(x=>x.p>=st).reduce((s,x)=>s+(x.type==='in'?x.amount:-x.amount),0)+allInc().filter(x=>x.to==='vault'&&x.p>=st).reduce((s,x)=>s+x.amount,0)}
+function vaultBefore(m){const st=vStart();return monthsList().filter(k=>k<m&&k>=st).reduce((s,k)=>s+surplus(k),0)}
 function nsStats(){const days=S.noSpend.filter(d=>periodOf(d)===ym);let combo=0;const set=new Set(S.noSpend);let t=new Date(now);for(;;){const k=`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;if(set.has(k)){combo++;t.setDate(t.getDate()-1)}else break}return {count:days.length,combo}}
 
 /* 부서별 한도: months.paid.b 에 저장. 가장 최근에 정한 한도가 그 뒤 기간에도 계속 적용됨 */
@@ -514,7 +519,7 @@ function render(){
   $('vaultBig').textContent=won(carry);
   const H=$('hist');H.textContent='';
   for(const m of monthsList().filter(k=>k<=ym).reverse()){const sp=surplus(m),im=incMonth(m);const r=document.createElement('div');r.className='hrow';const t=document.createElement('div');t.className='t';
-    const b=document.createElement('b');b.textContent=periodLabel(m,true)+(m===ym?' (진행 중)':'');const sub=document.createElement('span');sub.textContent=`받은 돈 ${man(S.months[m]?.received||0)}${im?` · 부수입 +${man(im)}`:''} · 고정비 ${man(-fxTotal())} · 변동비 ${man(-spentOf(m))}${monthAdj(m)?` · 금고 ${monthAdj(m)>0?'+':''}${man(monthAdj(m))}`:''}`;t.append(b,sub);
+    const b=document.createElement('b');b.textContent=periodLabel(m,true)+(m===ym?' (진행 중)':'')+(m<vStart()?' · 살아보기 (금고 제외)':'');const sub=document.createElement('span');sub.textContent=`받은 돈 ${man(S.months[m]?.received||0)}${im?` · 부수입 +${man(im)}`:''} · 고정비 ${man(-fxTotal())} · 변동비 ${man(-spentOf(m))}${monthAdj(m)?` · 금고 ${monthAdj(m)>0?'+':''}${man(monthAdj(m))}`:''}`;t.append(b,sub);
     const a=document.createElement('span');a.className='a '+(sp<0?'neg':'pos');a.textContent=won(sp);r.append(t,a);H.appendChild(r)}
   drawSafe();
   $('fMethod').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(!$('fMethodCustom').value.trim()&&b.dataset.m===method)));
@@ -588,7 +593,7 @@ function vFixHint(){const cur=vaultNow(),n=num($('vAmt').value),df=n-cur;$('vKin
 $('vTypeSeg').onclick=e=>{const t=e.target.closest('button')?.dataset.t;if(!t||!vEdit)return;vType=t;$('vTypeSeg').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===t)));vKindRender()};
 $('vFixBtn').onclick=()=>vOpen('fix');
 $('vOutBtn').onclick=()=>vOpen('out');$('vInBtn').onclick=()=>vOpen('in');$('vCancel').onclick=()=>{$('vForm').hidden=true;vEdit=null};
-$('vAmt').addEventListener('input',e=>{const n=num(e.target.value);e.target.value=n?n.toLocaleString('ko-KR'):'';if(vType==='fix')vFixHint()});
+$('vAmt').addEventListener('input',e=>{const n=num(e.target.value);e.target.value=n?n.toLocaleString('ko-KR'):(vType==='fix'&&/0/.test(e.target.value)?'0':'');if(vType==='fix')vFixHint()});
 $('vForm').onsubmit=e=>{e.preventDefault();let amount=num($('vAmt').value),type=vType,month=vMonth;
   if(type==='fix'){if(!$('vAmt').value.trim()){toast('실제 금고 잔액을 입력해주세요');return}const df=amount-vaultNow();if(!df){toast('이미 잔액이 같아요');$('vForm').hidden=true;return}type=df>0?'in':'out';amount=Math.abs(df);month=false}
   if(!amount){toast('금액을 입력해주세요');return}
@@ -596,7 +601,7 @@ $('vForm').onsubmit=e=>{e.preventDefault();let amount=num($('vAmt').value),type=
   if(vEdit){const om=M(vEdit.p);om.paid={...(om.paid||{}),v:(om.paid?.v||[]).filter(y=>y.id!==vEdit.id)};if(vEdit.p!==p)saveMonth(vEdit.p)}
   const m=M(p);m.paid={...(m.paid||{})};m.paid.v=[...(m.paid.v||[]),rec];saveMonth(p);play('coin');burst(286,70,['#f2b632','#ffd96a']);
   toast(vEdit?'금고 기록을 수정했어요':vType==='fix'?`금고 잔액을 ${won(vaultNow())}으로 맞췄어요`:type==='out'?`금고에서 ${won(amount)} 꺼냈어요`:`금고에 ${won(amount)} 채웠어요`);vEdit=null;$('vForm').hidden=true;render()};
-function renderVault(){const L=$('vList');L.textContent='';const mv=[...allMoves(),...allInc().filter(x=>x.to==='vault').map(x=>({...x,type:'in',inc:true}))].sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));$('vCount').textContent=mv.length?`${mv.length}건`:'';
+function renderVault(){const L=$('vList');L.textContent='';const st=vStart(),mv=[...allMoves(),...allInc().filter(x=>x.to==='vault').map(x=>({...x,type:'in',inc:true}))].filter(x=>x.p>=st).sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));$('vCount').textContent=mv.length?`${mv.length}건`:'';
   if(!mv.length){const e=document.createElement('div');e.className='empty';e.textContent='아직 금고에서 꺼내거나 채운 기록이 없어요.';L.appendChild(e);return}
   for(const x of mv){const r=document.createElement('div');r.className='vrow';
     const d=document.createElement('span');d.className='d';d.textContent=`${+x.date.slice(5,7)}/${+x.date.slice(8)}`;
