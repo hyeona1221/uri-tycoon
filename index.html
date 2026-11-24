@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=23">
+<link rel="stylesheet" href="style.css?v=24">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -303,8 +303,10 @@
             <button class="btn" id="vOutBtn" type="button">금고에서 꺼내 쓰기</button>
             <button class="btn blue" id="vInBtn" type="button">금고 채우기</button>
           </div>
+          <button class="btn gray mini" id="vFixBtn" type="button">✏️ 금고 잔액 직접 맞추기</button>
           <form id="vForm" class="vform" hidden autocomplete="off">
             <b id="vFormTitle"></b>
+            <div class="seg" id="vTypeSeg" role="group" aria-label="꺼냄 또는 채움" hidden><button type="button" data-t="out">꺼냄</button><button type="button" data-t="in">채움</button></div>
             <input class="field amt" id="vAmt" inputmode="numeric" placeholder="금액" aria-label="금액">
             <div class="seg" id="vKind" role="group" aria-label="어떤 돈인가요"></div>
             <p class="hint" id="vKindHint"></p>
@@ -318,6 +320,7 @@
         <section class="paper card">
           <h2>금고 입출금 내역 <small id="vCount"></small></h2>
           <div class="ledger" id="vList"></div>
+          <p class="hint">줄을 누르면 수정·삭제 버튼이 나와요. 부수입은 결재 장부에서 고쳐요.</p>
         </section>
         <section class="paper card">
           <h2>월별 정산</h2>
@@ -341,7 +344,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=23"></script>
-<script src="app.js?v=23"></script>
+<script src="config.js?v=24"></script>
+<script src="app.js?v=24"></script>
 </body>
 </html>

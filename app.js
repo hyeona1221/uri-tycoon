@@ -218,7 +218,7 @@ function incCheer(rec){play('income');burst(286,70,['#4fa64a','#9be38f','#f2b632
 let vm=ym;
 document.querySelectorAll('[data-pprev]').forEach(b=>b.onclick=()=>{const ms=monthsList().filter(k=>k<vm);if(ms.length){vm=ymShift(vm,-1);if(vm<ms[0])vm=ms[0];render()}});
 document.querySelectorAll('[data-pnext]').forEach(b=>b.onclick=()=>{const ms=monthsList();if(vm<(ms[ms.length-1]>ym?ms[ms.length-1]:ym)){vm=ymShift(vm,1);render()}});
-function rowToggle(r){r.tabIndex=0;r.setAttribute('role','button');const tg=()=>{const on=!r.classList.contains('open');r.parentElement.querySelectorAll('.lrow.open').forEach(x=>x.classList.remove('open'));r.classList.toggle('open',on)};
+function rowToggle(r){r.tabIndex=0;r.setAttribute('role','button');const tg=()=>{const on=!r.classList.contains('open');r.parentElement.querySelectorAll(':scope>.open').forEach(x=>x.classList.remove('open'));r.classList.toggle('open',on)};
   r.addEventListener('click',e=>{if(e.target.closest('button'))return;tg()});r.addEventListener('keydown',e=>{if(e.target===r&&(e.key==='Enter'||e.key===' ')){e.preventDefault();tg()}})}
 
 /* ---------- calendar ---------- */
@@ -528,24 +528,39 @@ const V_KINDS={out:[[true,'이번 달 생활비에 보태기','생활비가 모�
   in:[[true,'이번 달 생활비에서 옮기기','이번 달 쓸 돈 일부를 미리 금고에 넣어둠. 이번 달 남은 돈이 줄어요.'],[false,'다른 돈 넣기','보너스, 축의금, 원래 있던 비상금처럼 생활비 밖의 돈을 넣음.']]};
 function vKindRender(){const box=$('vKind');box.textContent='';for(const [m,label] of V_KINDS[vType]){const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-pressed',String(vMonth===m));b.onclick=()=>{vMonth=m;vKindRender()};box.appendChild(b)}
   $('vKindHint').textContent=V_KINDS[vType].find(k=>k[0]===vMonth)[2]}
-function vOpen(t){vType=t;vMonth=true;$('vForm').hidden=false;$('vFormTitle').textContent=t==='out'?'금고에서 꺼내 쓰기':'금고 채우기';$('vSave').textContent=t==='out'?'꺼내기 기록':'채우기 기록';$('vAmt').value='';$('vMemo').value='';$('vDate').value=today;vKindRender();$('vAmt').focus()}
-$('vOutBtn').onclick=()=>vOpen('out');$('vInBtn').onclick=()=>vOpen('in');$('vCancel').onclick=()=>{$('vForm').hidden=true};
-$('vAmt').addEventListener('input',e=>{const n=num(e.target.value);e.target.value=n?n.toLocaleString('ko-KR'):''});
-$('vForm').onsubmit=e=>{e.preventDefault();const amount=num($('vAmt').value);if(!amount){toast('금액을 입력해주세요');return}
-  const date=$('vDate').value||today,p=periodOf(date),m=M(p);m.paid={...(m.paid||{})};m.paid.v=[...(m.paid.v||[]),{id:crypto.randomUUID(),type:vType,month:vMonth,amount,date,memo:$('vMemo').value.trim().slice(0,40)}];
-  saveMonth(p);play('coin');burst(286,70,['#f2b632','#ffd96a']);toast(vType==='out'?`금고에서 ${won(amount)} 꺼냈어요`:`금고에 ${won(amount)} 채웠어요`);$('vForm').hidden=true;render()};
+let vEdit=null;
+/* t: 'out' 꺼내기, 'in' 채우기, 'fix' 잔액 맞추기. x 가 있으면 그 기록을 수정 */
+function vOpen(t,x){vType=t;vEdit=x?{id:x.id,p:x.p,fix:!!x.fix}:null;vMonth=x?!!x.month:true;const fix=t==='fix';$('vForm').hidden=false;
+  $('vFormTitle').textContent=x?'금고 기록 수정':fix?'금고 잔액 직접 맞추기':t==='out'?'금고에서 꺼내 쓰기':'금고 채우기';
+  $('vSave').textContent=x?'수정 저장':fix?'잔액 맞추기':t==='out'?'꺼내기 기록':'채우기 기록';
+  $('vAmt').placeholder=fix?'실제 금고 잔액':'금액';$('vAmt').value=x?x.amount.toLocaleString('ko-KR'):'';$('vMemo').value=x?x.memo||'':'';$('vDate').value=x?x.date:today;
+  $('vKind').hidden=fix;$('vTypeSeg').hidden=!x;if(x)$('vTypeSeg').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===vType)));
+  if(fix){$('vMemo').value='잔액 맞추기';vFixHint()}else vKindRender();$('vForm').scrollIntoView({block:'nearest'});$('vAmt').focus()}
+function vFixHint(){const cur=vaultNow(),n=num($('vAmt').value),df=n-cur;$('vKindHint').textContent=`지금 앱의 금고 잔액은 ${won(cur)}이에요.`+($('vAmt').value?(df===0?' 이미 같아요.':` 차액 ${df>0?'+':''}${won(df)}을 ${df>0?'채움':'꺼냄'} 기록으로 남겨요. 생활비는 그대로예요.`):' 실제 잔액을 넣으면 차액만큼 맞춰줘요.')}
+$('vTypeSeg').onclick=e=>{const t=e.target.closest('button')?.dataset.t;if(!t||!vEdit)return;vType=t;$('vTypeSeg').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===t)));vKindRender()};
+$('vFixBtn').onclick=()=>vOpen('fix');
+$('vOutBtn').onclick=()=>vOpen('out');$('vInBtn').onclick=()=>vOpen('in');$('vCancel').onclick=()=>{$('vForm').hidden=true;vEdit=null};
+$('vAmt').addEventListener('input',e=>{const n=num(e.target.value);e.target.value=n?n.toLocaleString('ko-KR'):'';if(vType==='fix')vFixHint()});
+$('vForm').onsubmit=e=>{e.preventDefault();let amount=num($('vAmt').value),type=vType,month=vMonth;
+  if(type==='fix'){if(!$('vAmt').value.trim()){toast('실제 금고 잔액을 입력해주세요');return}const df=amount-vaultNow();if(!df){toast('이미 잔액이 같아요');$('vForm').hidden=true;return}type=df>0?'in':'out';amount=Math.abs(df);month=false}
+  if(!amount){toast('금액을 입력해주세요');return}
+  const date=$('vDate').value||today,p=periodOf(date),rec={id:vEdit?.id||crypto.randomUUID(),type,month,amount,date,memo:$('vMemo').value.trim().slice(0,40),...(vType==='fix'||vEdit?.fix?{fix:true}:{})};
+  if(vEdit){const om=M(vEdit.p);om.paid={...(om.paid||{}),v:(om.paid?.v||[]).filter(y=>y.id!==vEdit.id)};if(vEdit.p!==p)saveMonth(vEdit.p)}
+  const m=M(p);m.paid={...(m.paid||{})};m.paid.v=[...(m.paid.v||[]),rec];saveMonth(p);play('coin');burst(286,70,['#f2b632','#ffd96a']);
+  toast(vEdit?'금고 기록을 수정했어요':vType==='fix'?`금고 잔액을 ${won(vaultNow())}으로 맞췄어요`:type==='out'?`금고에서 ${won(amount)} 꺼냈어요`:`금고에 ${won(amount)} 채웠어요`);vEdit=null;$('vForm').hidden=true;render()};
 function renderVault(){const L=$('vList');L.textContent='';const mv=[...allMoves(),...allInc().filter(x=>x.to==='vault').map(x=>({...x,type:'in',inc:true}))].sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));$('vCount').textContent=mv.length?`${mv.length}건`:'';
   if(!mv.length){const e=document.createElement('div');e.className='empty';e.textContent='아직 금고에서 꺼내거나 채운 기록이 없어요.';L.appendChild(e);return}
   for(const x of mv){const r=document.createElement('div');r.className='vrow';
     const d=document.createElement('span');d.className='d';d.textContent=`${+x.date.slice(5,7)}/${+x.date.slice(8)}`;
     const tg=document.createElement('span');tg.className='tag2 '+x.type;tg.textContent=x.inc?'부수입':x.type==='out'?'꺼냄':'채움';
-    const t=document.createElement('div');t.className='t';const b=document.createElement('b');b.textContent=x.inc?[x.place,x.memo].filter(Boolean).join(' · ')||'부수입':x.memo||(x.type==='out'?'금고에서 꺼냄':'금고 채움');const s=document.createElement('span');s.textContent=x.inc?'부수입 → 금고 (수정·삭제는 결재 장부에서)':V_KINDS[x.type].find(k=>k[0]===!!x.month)[1];t.append(b,s);
+    const t=document.createElement('div');t.className='t';const b=document.createElement('b');b.textContent=x.inc?[x.place,x.memo].filter(Boolean).join(' · ')||'부수입':x.memo||(x.type==='out'?'금고에서 꺼냄':'금고 채움');const s=document.createElement('span');s.textContent=x.inc?'부수입 → 금고 (수정·삭제는 결재 장부에서)':x.fix?'잔액 맞추기 (생활비와 상관없음)':V_KINDS[x.type].find(k=>k[0]===!!x.month)[1];t.append(b,s);
     const a=document.createElement('span');a.className='a '+(x.type==='out'?'neg':'pos');a.textContent=(x.type==='out'?'-':'+')+x.amount.toLocaleString('ko-KR');
-    const del=document.createElement('button');del.className='del';del.textContent='삭제';del.style.cssText='background:#fff;border:2px solid #000;border-radius:3px;font-size:11px;padding:2px 6px';
-    del.onclick=()=>{if(!del.dataset.c){del.dataset.c='1';del.textContent='정말?';del.style.background='var(--red)';del.style.color='#fff';setTimeout(()=>{if(del.isConnected){delete del.dataset.c;del.textContent='삭제';del.style.background='#fff';del.style.color=''}},3000);return}
-      const m=M(x.p);m.paid={...(m.paid||{}),v:(m.paid?.v||[]).filter(y=>y.id!==x.id)};saveMonth(x.p);toast('삭제했어요');render()};
     if(x.inc){r.append(d,tg,t,a);L.appendChild(r);continue}
-    r.append(d,tg,t,a,del);L.appendChild(r)}}
+    const acts=document.createElement('div');acts.className='acts';const ed=document.createElement('button');ed.textContent='수정';ed.onclick=()=>vOpen(x.type,x);
+    const del=document.createElement('button');del.textContent='삭제';
+    del.onclick=()=>{if(!del.dataset.c){del.dataset.c='1';del.textContent='정말?';del.className='danger';setTimeout(()=>{if(del.isConnected){delete del.dataset.c;del.textContent='삭제';del.className=''}},3000);return}
+      const m=M(x.p);m.paid={...(m.paid||{}),v:(m.paid?.v||[]).filter(y=>y.id!==x.id)};saveMonth(x.p);toast('삭제했어요');render()};
+    acts.append(ed,del);r.append(d,tg,t,a,acts);rowToggle(r);L.appendChild(r)}}
 
 /* ---------- payment method totals ---------- */
 let payOpen=null;
