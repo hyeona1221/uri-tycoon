@@ -14,7 +14,7 @@
 <title>우리집 자산관리(주)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=VT323&display=swap">
-<link rel="stylesheet" href="style.css?v=25">
+<link rel="stylesheet" href="style.css?v=26">
 </head>
 <body>
 <div class="lock" id="lock">
@@ -190,6 +190,7 @@
             <div class="seg kind" id="fKind" role="group" aria-label="지출 또는 부수입">
               <button type="button" data-k="exp" aria-pressed="true">💸 지출</button>
               <button type="button" data-k="inc" aria-pressed="false">🥕 부수입</button>
+              <button type="button" data-k="adv" aria-pressed="false">🤝 대신 결제</button>
             </div>
             <div class="row">
               <input class="field" id="fDate" type="date" aria-label="날짜">
@@ -197,6 +198,16 @@
             </div>
             <div class="places" id="fPlaces" role="group" aria-label="자주 쓰는 사용처"></div>
             <input class="field amt" id="fAmt" inputmode="numeric" placeholder="금액" aria-label="금액">
+            <div id="fAdvBox" hidden>
+              <div class="seg" id="fAdvMode" role="group" aria-label="내 몫 나누기">
+                <button type="button" data-a="n" aria-pressed="true">N분의 1</button>
+                <button type="button" data-a="mine" aria-pressed="false">내 몫 직접</button>
+                <button type="button" data-a="none" aria-pressed="false">내 몫 없음</button>
+              </div>
+              <div class="advn" id="fAdvNBox"><button type="button" id="fAdvMinus" aria-label="인원 줄이기">−</button><b id="fAdvNum">4명</b><button type="button" id="fAdvPlus" aria-label="인원 늘리기">+</button><span>나 포함 인원</span></div>
+              <input class="field" id="fAdvIn" inputmode="numeric" placeholder="내 몫 금액" aria-label="내 몫 금액" hidden>
+              <p class="hint advhint" id="fAdvHint"></p>
+            </div>
             <div class="depts" id="fDepts" role="group" aria-label="부서"></div>
             <div id="fDestBox" hidden>
               <div class="seg" id="fDest" role="group" aria-label="넣을 곳">
@@ -229,6 +240,11 @@
               <button class="btn gray" id="fCancel" type="button" hidden style="flex:0 0 auto">수정 취소</button>
             </div>
           </form>
+        </section>
+        <section class="paper card" id="advCard" hidden>
+          <h2>🤝 받을 돈 (대신 결제) <small id="advSum"></small></h2>
+          <div class="ledger" id="advList"></div>
+          <p class="hint">줄을 누르고 [받았어요]를 누르면 정산돼요. 일부만 받았으면 금액을 고쳐서 눌러요. 받은 돈은 받은 날의 생활비로 돌아와요.</p>
         </section>
         <section class="paper card" id="ledgerCard">
           <div class="pnav" role="group" aria-label="보는 기간">
@@ -344,7 +360,7 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="config.js?v=25"></script>
-<script src="app.js?v=25"></script>
+<script src="config.js?v=26"></script>
+<script src="app.js?v=26"></script>
 </body>
 </html>

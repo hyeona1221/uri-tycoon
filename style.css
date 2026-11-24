@@ -344,3 +344,16 @@ button.lvl{cursor:pointer;font:inherit;text-align:left}
 .vrow .acts{display:none;grid-column:1/-1;justify-content:flex-end;gap:6px}
 .vrow.open{background:#fff8dc}.vrow.open .acts{display:flex}.vrow .acts button{font-size:13px;padding:5px 14px}
 .vform .seg{margin:6px 0}
+
+/* 대신 결제 */
+.seg.kind button{font-size:13px;padding:8px 2px}
+.seg.kind button[data-k="adv"][aria-pressed="true"]{background:var(--blue);color:#fff}
+#fAdvBox{display:flex;flex-direction:column;gap:6px}
+.advn{display:flex;align-items:center;gap:8px}.advn button{width:38px;height:34px;background:#fff;border:2px solid #000;border-radius:3px;font-size:18px;box-shadow:inset 0 -3px 0 #ddd5c0}
+.advn b{font-family:var(--px);font-size:22px;min-width:44px;text-align:center}.advn span{font-size:12px;color:var(--muted)}
+.advhint{color:#284f91;font-weight:500}
+.itag.adv{background:#284f91}
+.lrow.adv{cursor:pointer}.lrow.adv.done{opacity:.6}
+.lrow.adv .acts{display:none;grid-column:1/-1;justify-content:flex-end;gap:6px;align-items:center}
+.lrow.adv.open{background:#eef3ff}.lrow.adv.open .acts{display:flex}
+.lrow.adv .acts .field{width:120px;padding:5px 8px;font-size:14px}.lrow.adv .acts button.ok{background:var(--blue);color:#fff}
