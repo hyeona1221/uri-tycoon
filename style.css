@@ -196,7 +196,7 @@ table.hist td{padding:6px 4px;border-bottom:1px solid #d3cab3;text-align:right;f
 .places button[aria-pressed="true"]{background:var(--ink);color:#fff;box-shadow:none}
 .places button.recent{border-style:dashed}
 
-#fMethod{flex-wrap:wrap}#fMethod button{flex:1 1 18%;min-width:0;white-space:nowrap;padding:6px 2px}
+#fMethod{flex-wrap:wrap}#fMethod button{flex:1 1 22%;min-width:0;white-space:nowrap;padding:6px 2px}
 
 .paytot{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:4px}
 .paytot b{font-size:28px}
@@ -357,4 +357,4 @@ button.lvl{cursor:pointer;font:inherit;text-align:left}
 .lrow.adv .acts{display:none;grid-column:1/-1;justify-content:flex-end;gap:6px;align-items:center}
 .lrow.adv.open{background:#eef3ff}.lrow.adv.open .acts{display:flex}
 .lrow.adv .acts .field{width:120px;padding:5px 8px;font-size:14px}.lrow.adv .acts button.ok{background:var(--blue);color:#fff}
-@media (max-width:420px){#fMethod button{font-size:12px;padding:6px 0;letter-spacing:-.03em}}
+@media (max-width:420px){#fMethod button{font-size:13px;padding:7px 0;letter-spacing:-.03em}}
