@@ -311,21 +311,32 @@ $('fAdvIn').addEventListener('input',e=>{const n=parseInt(e.target.value.replace
 $('fAmt').addEventListener('input',()=>{if(kind==='adv')advHint()});
 function saveAdv(x,fn){const m=M(x.p);m.paid={...(m.paid||{})};m.paid.a=(m.paid.a||[]).map(y=>y.id===x.id?fn({...y}):y);saveMonth(x.p)}
 let advOpenId=null;
+/* N분의 1 이면 나를 뺀 (N-1)명 몫으로 나눠 사람별로 받기. 이름은 people 에 저장, 받음은 back 에 pid 로 기록 */
+function advPeople(x){if(x.people)return x.people;if(!(x.n>1)||(x.back||[]).some(b=>!b.pid))return null;
+  const k=x.n-1,tot=advOthers(x),per=Math.round(tot/k/10)*10;return Array.from({length:k},(_,i)=>({id:'p'+(i+1),name:'',amount:i===k-1?tot-per*(k-1):per}))}
 function renderAdv(){const card=$('advCard'),list=allAdv().sort((a,b)=>(b.date+(b.at||'')).localeCompare(a.date+(a.at||''))),pend=list.filter(x=>advLeft(x)>0),done=list.filter(x=>!advLeft(x)).slice(0,5);
   card.hidden=!list.length;if(!list.length)return;const L=$('advList');L.textContent='';const tot=pend.reduce((s,x)=>s+advLeft(x),0);
   $('advSum').textContent=tot?`받을 돈 ${won(tot)} · ${pend.length}건`:'모두 정산 완료!';
   for(const x of [...pend,...done]){const left=advLeft(x),r=document.createElement('div');r.className='lrow adv'+(left?'':' done')+(advOpenId===x.id?' open':'');
     const dd=document.createElement('span');dd.className='d';dd.textContent=shortDate(x.date);const dot=document.createElement('span');dot.className='dot';dot.style.background=left?'var(--blue)':'var(--green)';
     const t=document.createElement('div');t.className='t';const b=document.createElement('b');b.textContent=x.place||'대신 결제';const sp=document.createElement('span');
-    const days=Math.round((new Date(today)-new Date(x.date))/864e5);sp.textContent=`전체 ${x.total.toLocaleString('ko-KR')} · 내 몫 ${x.mine.toLocaleString('ko-KR')}`+(x.n?` (${x.n}명)`:'')+(left?(advBackSum(x)?` · ${advBackSum(x).toLocaleString('ko-KR')} 받음`:'')+(days>0?` · ${days}일째 대기`:''):' · 정산 완료')+(x.memo?' · '+x.memo:'');t.append(b,sp);
+    const days=Math.round((new Date(today)-new Date(x.date))/864e5);const ppl=advPeople(x),got=pp=>(x.back||[]).some(b=>b.pid===pp.id);sp.textContent=`전체 ${x.total.toLocaleString('ko-KR')} · 내 몫 ${x.mine.toLocaleString('ko-KR')}`+(x.n?` (${x.n}명)`:'')+(ppl?` · 받음 ${ppl.filter(got).length}/${ppl.length}`+(ppl.some(pp=>pp.name)?' ('+ppl.map((pp,i)=>(pp.name||(i+1)+'번')+(got(pp)?'✓':'')).join(', ')+')':''):'')+(left?(!ppl&&advBackSum(x)?` · ${advBackSum(x).toLocaleString('ko-KR')} 받음`:'')+(days>0?` · ${days}일째 대기`:''):' · 정산 완료')+(x.memo?' · '+x.memo:'');t.append(b,sp);
     const a=document.createElement('span');a.className='a '+(left?'':'pos');a.textContent=left?left.toLocaleString('ko-KR'):'✓';
     const acts=document.createElement('div');acts.className='acts';
-    if(left){const inp=document.createElement('input');inp.className='field';inp.inputMode='numeric';inp.value=left.toLocaleString('ko-KR');inp.setAttribute('aria-label','받은 금액');inp.addEventListener('input',e=>{const n=parseInt(e.target.value.replace(/[^0-9]/g,''),10)||0;e.target.value=n?n.toLocaleString('ko-KR'):''});
+    if(ppl){acts.classList.add('ppl');ppl.forEach((pp,i)=>{const row=document.createElement('div');row.className='prow'+(got(pp)?' got':'');
+        const nm=document.createElement('input');nm.className='field';nm.placeholder=`${i+1}번 (누구?)`;nm.value=pp.name||'';nm.maxLength=12;nm.setAttribute('aria-label',`${i+1}번 이름`);
+        nm.addEventListener('change',()=>{const v=nm.value.trim();saveAdv(x,y=>({...y,people:(advPeople(y)||[]).map(q=>q.id===pp.id?{...q,name:v}:q)}))});
+        const am=document.createElement('span');am.className='pa';am.textContent=pp.amount.toLocaleString('ko-KR');
+        const ok=document.createElement('button');ok.className=got(pp)?'':'ok';ok.textContent=got(pp)?'받음 ✓':'받았어요';
+        ok.onclick=()=>{const was=got(pp);const nmv=nm.value.trim();saveAdv(x,y=>({...y,people:(advPeople(y)||[]).map(q=>q.id===pp.id?{...q,name:nmv}:q),back:was?(y.back||[]).filter(b=>b.pid!==pp.id):[...(y.back||[]),{id:crypto.randomUUID(),pid:pp.id,date:today,amount:pp.amount}]}));
+          if(!was){play('coin');burst(286,70,['#4fa64a','#9be38f','#f2b632']);const rest=advLeft(x)-pp.amount;if(rest<=0){advOpenId=null;floatText('정산 완료! 💰','28','50');toast(`${x.place||'대신 결제'} 정산 완료!`)}else toast(`${nmv||(i+1)+'번'} ${won(pp.amount)} 받았어요 · 남은 ${won(rest)}`)}else toast('받음을 취소했어요');render()};
+        row.append(nm,am,ok);acts.appendChild(row)})}
+    else if(left){const inp=document.createElement('input');inp.className='field';inp.inputMode='numeric';inp.value=left.toLocaleString('ko-KR');inp.setAttribute('aria-label','받은 금액');inp.addEventListener('input',e=>{const n=parseInt(e.target.value.replace(/[^0-9]/g,''),10)||0;e.target.value=n?n.toLocaleString('ko-KR'):''});
       const ok=document.createElement('button');ok.className='ok';ok.textContent='받았어요';ok.onclick=()=>{const amt=Math.min(left,parseInt(inp.value.replace(/[^0-9]/g,''),10)||0);if(!amt){toast('받은 금액을 넣어주세요');return}
         saveAdv(x,y=>({...y,back:[...(y.back||[]),{id:crypto.randomUUID(),date:today,amount:amt}]}));advOpenId=null;play('coin');burst(286,70,['#4fa64a','#9be38f','#f2b632']);
         if(amt>=left){floatText('정산 완료! 💰','28','50');toast(`${x.place||'대신 결제'} 정산 완료! ${won(amt)} 받았어요`)}else toast(`${won(amt)} 받았어요 · 남은 ${won(left-amt)}`);render()};
       acts.append(inp,ok)}
-    else if((x.back||[]).length){const un=document.createElement('button');un.textContent='받음 취소';un.onclick=()=>{saveAdv(x,y=>({...y,back:[]}));advOpenId=null;toast('받음을 취소했어요');render()};acts.append(un)}
+    else if(!ppl&&(x.back||[]).length){const un=document.createElement('button');un.textContent='받음 취소';un.onclick=()=>{saveAdv(x,y=>({...y,back:[]}));advOpenId=null;toast('받음을 취소했어요');render()};acts.append(un)}
     const del=document.createElement('button');del.textContent='삭제';del.onclick=()=>{if(!del.dataset.c){del.dataset.c='1';del.textContent='정말?';del.className='danger';setTimeout(()=>{if(del.isConnected){delete del.dataset.c;del.textContent='삭제';del.className=''}},3000);return}
       const m=M(x.p);m.paid={...(m.paid||{}),a:(m.paid?.a||[]).filter(y=>y.id!==x.id)};saveMonth(x.p);if(x.expId&&S.expenses.some(e=>e.id===x.expId)){S.expenses=S.expenses.filter(e=>e.id!==x.expId);write(()=>sb.from('expenses').delete().eq('id',x.expId))}advOpenId=null;toast('삭제했어요 (내 몫 지출도 함께)');render()};
     acts.append(del);r.append(dd,dot,t,a,acts);
@@ -726,7 +737,7 @@ $('form').onsubmit=e=>{e.preventDefault();const amount=num($('fAmt').value);if(!
   if(kind==='adv'){const c=advCalc(amount);if(c.mine>amount){toast('내 몫이 전체 금액보다 커요');return}if(c.mine===amount){toast('받을 돈이 없어요. 그냥 지출로 올려주세요');return}
     const date=$('fDate').value||today,p=periodOf(date),place=$('fPlace').value.trim().slice(0,40),memo=$('fMemo').value.trim().slice(0,60),id=crypto.randomUUID();
     let expId=null;if(c.mine>0){expId=crypto.randomUUID();const rec={id:expId,cat:selDept,place,amount:c.mine,method,memo:`[대신결제] 내 몫${c.n?` (${c.n}명 중 1)`:''}${memo?' '+memo:''}`.slice(0,60),date};S.expenses.push({...rec,at:new Date().toISOString()});write(()=>sb.from('expenses').insert(rec))}
-    const m=M(p);m.paid={...(m.paid||{})};m.paid.a=[...(m.paid.a||[]),{id,date,place,total:amount,mine:c.mine,n:c.n||0,cat:selDept,method,memo,expId,back:[],at:new Date().toISOString()}];saveMonth(p);
+    const m=M(p);m.paid={...(m.paid||{})};{const rec={id,date,place,total:amount,mine:c.mine,n:c.n||0,cat:selDept,method,memo,expId,back:[],at:new Date().toISOString()};const pp=advPeople(rec);if(pp)rec.people=pp;m.paid.a=[...(m.paid.a||[]),rec]}saveMonth(p);
     play('coin');burst(286,70,['#7fe3ff','#3f74c9','#fff']);floatText(`받을 돈 +${man(amount-c.mine)}`,'28','50');toast(`대신 결제 등록! 받을 돈 ${won(amount-c.mine)}${c.mine?` · 내 몫 ${won(c.mine)}`:''}`);
     {vm=p<=ym?p:ym}endEdit();render();return}
   if(kind==='inc'){const date=$('fDate').value||today,p=periodOf(date);

@@ -358,3 +358,11 @@ button.lvl{cursor:pointer;font:inherit;text-align:left}
 .lrow.adv.open{background:#eef3ff}.lrow.adv.open .acts{display:flex}
 .lrow.adv .acts .field{width:120px;padding:5px 8px;font-size:14px}.lrow.adv .acts button.ok{background:var(--blue);color:#fff}
 @media (max-width:420px){#fMethod button{font-size:13px;padding:7px 0;letter-spacing:-.03em}}
+
+.lrow.adv .acts.ppl{flex-direction:column;align-items:stretch}
+.lrow.adv .acts.ppl>button{align-self:flex-end}
+.prow{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}
+.lrow.adv .acts .prow .field{width:100%;min-width:0}
+.prow .pa{font-family:var(--px);font-size:18px;white-space:nowrap}
+.prow.got .field,.prow.got .pa{opacity:.55}.prow.got .pa{text-decoration:line-through}
+.prow button{white-space:nowrap}
