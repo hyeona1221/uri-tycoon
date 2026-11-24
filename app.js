@@ -14,7 +14,7 @@ const ymShift=(m,d)=>{const [y,mm]=m.split('-').map(Number);const t=new Date(y,m
 const DEPTS=[
  {id:'food',n:'식품(장보기)',team:'식자재조달팀',c:'#5aa84f'},
  {id:'dine',n:'외식/배달',team:'외식·간식지원팀',c:'#e2733a'},
- {id:'baby',n:'육아용품',team:'신입사원케어팀',c:'#f29bb8'},
+ {id:'baby',n:'육아관련',team:'신입사원케어팀',c:'#f29bb8'},
  {id:'choa',n:'초아비용',team:'인턴복지팀',c:'#d8913a'},
  {id:'home',n:'생필품',team:'총무·비품팀',c:'#55a9c9'},
  {id:'car',n:'교통',team:'차량운행팀',c:'#c94a3c'},
