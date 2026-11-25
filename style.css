@@ -33,7 +33,7 @@ button{cursor:pointer}
 .sound[aria-pressed="false"]{background:#555b6a;box-shadow:inset 0 -3px 0 #3a3f4b}
 /* scene */
 .scene{position:relative;border:3px solid var(--edge);border-radius:4px;overflow-x:auto;overflow-y:hidden;background:#d9cbb0;scrollbar-width:thin}
-.stage{position:relative;width:max(100%,760px);container-type:inline-size}
+.stage{position:relative;width:max(100%,760px);container-type:inline-size;overflow:hidden}
 .scene img{display:block;width:100%;height:auto;image-rendering:auto}
 .dogbtn{position:absolute;padding:0;border:0;background:none;cursor:pointer;left:39.45%;top:36.36%;width:6.05%}
 .dogbtn img{display:block;width:100%;height:auto;image-rendering:pixelated}
@@ -316,8 +316,11 @@ button.lvl{cursor:pointer;font:inherit;text-align:left}
 .scene #deco{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none}
 #tod{position:absolute;inset:0;pointer-events:none;transition:background 1.2s}
 .win{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.2s}
-.win.wl{clip-path:polygon(9.5% 39.5%,20.2% 23%,20.2% 43.5%,9.5% 55%)}
-.win.wr{clip-path:polygon(82% 19%,92.3% 33.5%,92.3% 61%,86.6% 54.5%,86.6% 37%,84.2% 33%,82% 36%)}
+/* 창문 유리 4칸 자리 (office.webp 1024x275 기준으로 잰 좌표) */
+.win.l1{clip-path:polygon(9.72% 39.45%, 10.16% 38.73%, 10.55% 38.00%, 10.94% 36.91%, 11.33% 36.18%, 11.72% 35.45%, 12.11% 34.73%, 12.50% 34.00%, 12.89% 33.27%, 13.28% 32.55%, 13.67% 31.82%, 14.11% 32.18%, 14.11% 44.73%, 13.67% 50.18%, 13.28% 51.27%, 12.89% 51.64%, 12.50% 52.36%, 12.11% 53.09%, 11.72% 53.82%, 11.33% 52.73%, 10.94% 51.64%, 10.55% 50.91%, 10.16% 50.18%, 9.72% 46.91%)}
+.win.l2{clip-path:polygon(15.09% 29.27%, 15.53% 28.55%, 15.92% 27.82%, 16.31% 27.09%, 16.70% 26.36%, 17.09% 25.27%, 17.48% 24.55%, 17.87% 23.82%, 18.26% 23.09%, 18.65% 22.73%, 18.80% 23.09%, 18.80% 40.36%, 18.65% 40.73%, 18.26% 41.45%, 17.87% 42.18%, 17.48% 42.91%, 17.09% 43.64%, 16.70% 44.36%, 16.31% 45.09%, 15.92% 45.82%, 15.53% 46.91%, 15.09% 46.91%)}
+.win.r1{clip-path:polygon(82.08% 20.91%, 82.52% 20.55%, 82.91% 21.64%, 83.30% 22.00%, 83.69% 22.36%, 84.08% 23.09%, 84.47% 23.82%, 84.86% 24.91%, 85.25% 25.27%, 85.64% 26.00%, 86.04% 27.09%, 86.18% 27.09%, 86.18% 47.27%, 86.04% 47.27%, 85.64% 46.91%, 85.25% 46.18%, 84.86% 44.36%, 84.47% 44.36%, 84.08% 42.91%, 83.69% 42.18%, 83.30% 41.45%, 82.91% 41.09%, 82.52% 40.00%, 82.08% 39.27%)}
+.win.r2{clip-path:polygon(87.16% 30.00%, 87.60% 30.00%, 87.99% 30.73%, 88.38% 31.82%, 88.77% 32.55%, 89.16% 33.27%, 89.55% 33.27%, 89.94% 34.36%, 90.33% 34.73%, 90.72% 35.45%, 91.11% 36.55%, 91.36% 37.27%, 91.36% 55.64%, 91.11% 56.73%, 90.72% 56.36%, 90.33% 55.64%, 89.94% 54.91%, 89.55% 53.82%, 89.16% 53.45%, 88.77% 52.73%, 88.38% 52.00%, 87.99% 51.27%, 87.60% 50.55%, 87.16% 49.09%)}
 #lampGlow{position:absolute;left:28.4%;top:76%;width:20%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,216,130,.6),rgba(255,216,130,.18) 40%,rgba(255,216,130,0) 68%);mix-blend-mode:screen;opacity:0;pointer-events:none;transition:opacity 1.2s}
 .stage[data-tod="eve"] .win{opacity:.78;background:linear-gradient(#141c5a 0%,#3b2a78 55%,#c56a4a 100%)}
 .stage[data-tod="eve"] #tod{background:radial-gradient(ellipse 55% 80% at 50% 0%,rgba(255,206,120,.2),rgba(255,206,120,0) 70%),rgba(44,28,84,.2)}
