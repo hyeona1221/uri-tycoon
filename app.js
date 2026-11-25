@@ -114,7 +114,9 @@ function nsStats(){const days=S.noSpend.filter(d=>periodOf(d)===ym);let combo=0;
 function budgets(p){const k=Object.keys(S.months).filter(k=>k<=p&&S.months[k]?.paid?.b).sort().pop();return k?S.months[k].paid.b:{}}
 const deptSpent=(p,id)=>exOf(p).filter(e=>e.cat===id).reduce((s,e)=>s+e.amount,0);
 const man=v=>{const n=Math.round(Math.abs(v)/1000)/10;return (v<0?'-':'')+(n%1?n.toFixed(1):String(n))+'만'};
-function dailyCalc(){const todaySpent=S.expenses.filter(e=>e.date===today).reduce((s,e)=>s+e.amount,0);const dl=daysLeftInPeriod(),pool=surplus(ym)+todaySpent,per=Math.max(0,Math.floor(pool/dl/100)*100);return {todaySpent,dl,pool,per,left:per-todaySpent}}
+/* 하루 권장 예산: 대신 결제로 아직 못 받은 돈은 곧 돌아올 돈이라 포함해서 계산 */
+const advPending=()=>allAdv().reduce((s,x)=>s+advLeft(x),0);
+function dailyCalc(){const todaySpent=S.expenses.filter(e=>e.date===today).reduce((s,e)=>s+e.amount,0);const dl=daysLeftInPeriod(),pend=advPending(),pool=surplus(ym)+pend+todaySpent,per=Math.max(0,Math.floor(pool/dl/100)*100);return {todaySpent,dl,pool,per,pend,left:per-todaySpent}}
 function bestCombo(){const d=[...new Set(S.noSpend)].sort();let best=0,run=0,prev=null;for(const x of d){const t=new Date(x+'T00:00:00');run=prev&&Math.round((t-prev)/864e5)===1?run+1:1;best=Math.max(best,run);prev=t}return best}
 
 /* ---------- toast ---------- */
@@ -471,7 +473,8 @@ function fxRows(el){
 }
 function renderHud(){
   {const A=achievements(),got=A.filter(x=>x.done).length,lv=Math.max(1,got);$('lv').textContent=lv;$('rank').textContent=rankOf(lv)[1];const xb=$('xp');xb.textContent='';for(let i=0;i<A.length;i++){const k=document.createElement('i');if(i<got)k.className='on';xb.appendChild(k)}}
-  const spent=spentOf(ym),[pa,pb]=periodRange(ym),total=Math.round((pb-pa)/864e5)+1,elapsed=Math.max(1,Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-pa)/864e5)+1);const pace=(spent/TARGET_MAX)/(elapsed/total);
+  const spent=spentOf(ym),[pa,pb]=periodRange(ym),total=Math.round((pb-pa)/864e5)+1,elapsed=Math.max(1,Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-pa)/864e5)+1);/* 재무 상태: 이번 기간 쓸 수 있는 돈(받은 돈−고정비+부수입±금고) 대비 지금까지 쓴 돈. 하루치 여유를 둬서 기간 초반에 한 번 쓴 걸로 '주의'가 뜨지 않게 함. 대신 결제의 남의 몫은 쓴 돈이 아님 */
+  const recvB=M(ym).received||0,B=recvB>0?recvB-fxTotal()+incMonth(ym)+monthAdj(ym):TARGET_MAX,pace=B>0?spent/(B*(elapsed+1)/total):spent>0?9:0;
   const st=pace<=.9?['good','양호 (잘 아끼고 있어요)']:pace<=1.1?['mid','보통 (페이스 유지!)']:['bad','주의 (예산 관리가 시급합니다!)'];
   $('status').innerHTML='재무 상태: <em></em>';const em=$('status').querySelector('em');em.className=st[0];em.textContent=st[1];
   $('hudVault').textContent=Math.round(vaultNow()/1000).toLocaleString('ko-KR')+'K';$('hudGem').textContent=nsStats().count;
@@ -542,13 +545,12 @@ function drawSafe(){const c=$('safeCv').getContext('2d');c.clearRect(0,0,40,40);
 
 /* ---------- daily recommended budget ---------- */
 function daysLeftInPeriod(){const [,end]=periodRange(ym);const t=new Date(now.getFullYear(),now.getMonth(),now.getDate());return Math.max(1,Math.round((end-t)/864e5)+1)}
-function renderDaily(avail){const todaySpent=S.expenses.filter(e=>e.date===today).reduce((s,e)=>s+e.amount,0);
-  const dl=daysLeftInPeriod(),pool=avail+todaySpent,per=Math.max(0,Math.floor(pool/dl/100)*100),left=per-todaySpent;
+function renderDaily(){const {todaySpent,dl,pool,per,left,pend}=dailyCalc();
   const [,end]=periodRange(ym);
   for(const el of document.querySelectorAll('[data-daily]')){el.textContent='';
     const l=document.createElement('span');l.className='l';l.textContent='오늘 하루 권장 예산';
     const b=document.createElement('b');b.textContent=won(per);if(per<=0)b.className='zero';
-    const s=document.createElement('small');s.textContent=pool<=0?`남은 생활비가 없어요 · ${end.getMonth()+1}/${end.getDate()}까지 ${dl}일`:`${end.getMonth()+1}/${end.getDate()}까지 ${dl}일 남음 · 오늘 쓴 돈 ${won(todaySpent)} · ${left>=0?'오늘 남은 권장액 '+won(left):won(-left)+' 초과'}`;
+    const s=document.createElement('small');s.textContent=pool<=0?`남은 생활비가 없어요 · ${end.getMonth()+1}/${end.getDate()}까지 ${dl}일`:`${end.getMonth()+1}/${end.getDate()}까지 ${dl}일 남음 · 오늘 쓴 돈 ${won(todaySpent)} · ${left>=0?'오늘 남은 권장액 '+won(left):won(-left)+' 초과'}`+(pend?` · 받을 돈 ${won(pend)} 포함`:'');
     el.append(l,b,s)}}
 
 /* ---------- PDF report ---------- */
