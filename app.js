@@ -45,7 +45,7 @@ async function loadAll(){
   {const rows=e.data.map(r=>({id:r.id,date:r.date,cat:r.cat,place:r.place,amount:r.amount,method:r.method,memo:r.memo,at:r.created_at,by:r.created_by}));
    /* cat 'pocket' = 남편 용돈 지출. 생활비 계산에 절대 섞이지 않게 여기서 따로 떼어둠 */
    S.expenses=rows.filter(r=>r.cat!=='pocket');S.pocket=rows.filter(r=>r.cat==='pocket')}
-  S.months={};for(const r of mo.data)S.months[r.ym]={received:r.received,paid:r.paid||{}};
+  S.months={};S.base={};for(const r of mo.data){S.months[r.ym]={received:r.received,paid:r.paid||{}};S.base[r.ym]=JSON.parse(JSON.stringify(S.months[r.ym]))}
   S.noSpend=ns.data.map(r=>r.date);
   FIXED=fx.data.map(r=>({id:r.id,n:r.name,w:r.due,a:r.amount}));
   /* 하나은행 적금 30만 → 20만 + 10만 두 항목으로 분리 (한 번만, 합계는 그대로) */
@@ -62,7 +62,22 @@ async function loadAll(){
 let reloadT=0;
 function scheduleReload(){clearTimeout(reloadT);reloadT=setTimeout(async()=>{try{await loadAll();render()}catch(e){}},250)}
 async function write(fn,okMsg){try{const {error}=await fn();if(error)throw error;if(okMsg)toast(okMsg)}catch(e){console.error(e);toast('저장하지 못했어요. 인터넷 연결을 확인해주세요');scheduleReload()}}
-const saveMonth=m=>write(()=>sb.from('months').upsert({ym:m,received:M(m).received||0,paid:M(m).paid||{},updated_at:new Date().toISOString()}));
+/* 한 달 기록 저장: 이 기기에서 바꾼 항목만 골라, 저장 직전에 받은 서버 최신본 위에 합쳐서 저장.
+   다른 폰에서 방금 저장한 도장·부수입 등을 예전 내용으로 덮어쓰지 않게 하기 위함 */
+const jeq=(a,b)=>JSON.stringify(a)===JSON.stringify(b),clone=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v));
+const saveQ={};
+function saveMonth(m){const loc=M(m),base=(S.base||(S.base={}))[m]||{received:0,paid:{}},lp=loc.paid||{},bp=base.paid||{};
+  const keys=[...new Set([...Object.keys(lp),...Object.keys(bp)])].filter(k=>!jeq(lp[k],bp[k])),recvChanged=(loc.received||0)!==(base.received||0);
+  if(!keys.length&&!recvChanged)return Promise.resolve();
+  const patch={keys:keys.map(k=>[k,clone(lp[k])]),recv:recvChanged?loc.received||0:null};
+  S.base[m]={received:loc.received||0,paid:clone(lp)};
+  const run=()=>write(async()=>{const {data,error}=await sb.from('months').select('*').eq('ym',m);if(error)return {error};
+    const fresh=(data&&data[0])||{received:0,paid:{}},paid={...(fresh.paid||{})};for(const [k,v] of patch.keys){if(v===undefined)delete paid[k];else paid[k]=v}
+    const received=patch.recv!==null?patch.recv:fresh.received||0;
+    const r=await sb.from('months').upsert({ym:m,received,paid,updated_at:new Date().toISOString()});
+    if(!r.error){const cur=M(m);for(const k of Object.keys(paid))if(!patch.keys.some(([pk])=>pk===k)&&jeq((cur.paid||{})[k],bp[k]))cur.paid={...(cur.paid||{}),[k]:paid[k]};S.base[m]={received,paid:clone(paid)}}
+    return r});
+  return saveQ[m]=(saveQ[m]||Promise.resolve()).then(run,run)}
 let channel=null;
 function subscribe(){if(channel)return;channel=sb.channel('uri-all');for(const t of['expenses','months','no_spend','fixed_items'])channel.on('postgres_changes',{event:'*',schema:'public',table:t},scheduleReload);channel.subscribe()}
 

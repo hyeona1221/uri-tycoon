@@ -192,7 +192,7 @@ table.hist td{padding:6px 4px;border-bottom:1px solid #d3cab3;text-align:right;f
 #bSendHint.warn{color:var(--red);font-weight:500}
 
 .places{display:flex;flex-wrap:wrap;gap:6px}
-.places button{background:#fff;border:2px solid #000;border-radius:99px;padding:4px 12px;font-size:13px;box-shadow:inset 0 -2px 0 #ddd5c0}
+.places button{background:#fff;border:2px solid #000;border-radius:99px;padding:8px 14px;min-height:40px;font-size:14px;box-shadow:inset 0 -2px 0 #ddd5c0}
 .places button[aria-pressed="true"]{background:var(--ink);color:#fff;box-shadow:none}
 .places button.recent{border-style:dashed}
 
@@ -224,7 +224,7 @@ table.hist td{padding:6px 4px;border-bottom:1px solid #d3cab3;text-align:right;f
 .daily b{font-family:var(--px);font-size:30px;font-weight:400;color:var(--gold);line-height:1}
 .daily b.zero{color:#ff8a77}
 .daily small{grid-column:1/-1;font-size:12px;color:#cfc8b6}
-.pdfbtn{background:#f3efe4;color:#1c1c1c;border:2px solid #000;border-radius:4px;padding:2px 8px;font-family:var(--hd);font-size:14px;box-shadow:inset 0 -2px 0 #cfc6b0;white-space:nowrap}
+.pdfbtn{background:#f3efe4;color:#1c1c1c;border:2px solid #000;border-radius:4px;padding:6px 10px;min-height:38px;font-family:var(--hd);font-size:14px;box-shadow:inset 0 -2px 0 #cfc6b0;white-space:nowrap}
 .pdfbtn:disabled{opacity:.6}
 @media (max-width:760px){.pdfbtn span{display:none}}
 /* PDF report sheet */
@@ -296,10 +296,10 @@ table.hist td{padding:6px 4px;border-bottom:1px solid #d3cab3;text-align:right;f
 .hrow .a{font-family:var(--px);font-size:20px;white-space:nowrap}
 button.lvl{cursor:pointer;font:inherit;text-align:left}
 .trophy{margin-left:auto;font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:2px}.trophy .px{font-size:18px;color:var(--gold)}
-.modal{position:fixed;inset:0;z-index:60;background:rgba(10,12,18,.72);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{position:fixed;inset:0;z-index:60;overscroll-behavior:contain;background:rgba(10,12,18,.72);display:flex;align-items:center;justify-content:center;padding:16px}
 .modal[hidden]{display:none}
 .achcard{width:min(440px,100%);max-height:86vh;display:flex;flex-direction:column;gap:8px}
-.achlist{overflow-y:auto;display:flex;flex-direction:column;border-top:2px solid #000}
+.achlist{overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;border-top:2px solid #000}
 .ach{display:flex;gap:10px;align-items:center;padding:8px 2px;border-bottom:1px solid #d3cab3;opacity:.62}
 .ach.done{opacity:1;background:#fff8dc}
 .ach .ic{font-size:24px;width:34px;text-align:center;flex:none}
@@ -369,3 +369,9 @@ button.lvl{cursor:pointer;font:inherit;text-align:left}
 .prow .pa{font-family:var(--px);font-size:18px;white-space:nowrap}
 .prow.got .field,.prow.got .pa{opacity:.55}.prow.got .pa{text-decoration:line-through}
 .prow button{white-space:nowrap}
+
+/* v33: 터치·숫자 정렬 */
+button,input,select,label,[role="button"],.tab,.role{touch-action:manipulation}
+.lrow .a,.vrow .a,.hrow .a,.crow .v,.kv .v,.payrow .v,.prow .pa,.sendbig,.big,.cd .sp,.cd .in{font-variant-numeric:tabular-nums}
+.lrow .acts button,.vrow .acts button{min-height:36px}
+.lvl{min-width:0}.lvl .xp{flex:1 1 auto;min-width:0;overflow:hidden}.lvl .xp i{flex:0 1 5px;min-width:2px}.rank{flex:none}
