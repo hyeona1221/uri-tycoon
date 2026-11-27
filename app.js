@@ -175,7 +175,7 @@ function wifeLines(){if(Date.now()<praiseUntil)return ['대표님 칭찬 도장!
   if(S.noSpend.includes(today))return ['오늘 무지출','달성 중! 💎'];
   if(FIXED.length&&FIXED.every(f=>M(ym).paid?.[f.id])&&!d.todaySpent)return ['고정비 결재','전부 완료!'];
   if(!d.todaySpent)return ['오늘은 아직','무지출이에요!'];
-  if(d.left<0)return ['오늘 권장 초과!','내일은 아껴요'];
+  if(d.left<0)return [`오늘 권장보다 ${man(-d.left)} 더 썼어요`,'이번 달은 아직 여유!'];
   return ['오늘 남은 예산',won(d.left)]}
 function drawScene(){const left=surplus(ym);{const wb=$('wifeBub');wb.textContent='';wifeLines().forEach((t,i)=>{if(i)wb.appendChild(document.createElement('br'));wb.appendChild(document.createTextNode(t))})}const bo=$('bossBub');bo.textContent='';bo.classList.toggle('grow',role==='boss');const bb=document.createElement('div');bo.appendChild(bb);const lines=role==='boss'?bossLines():left>=0?['이번 달 남은 돈',won(left)+'!','아껴 쓰자!']:['이번 달',won(-left)+' 초과!','금고에서 채우자!'];lines.forEach((t,i)=>{if(i)bb.appendChild(document.createElement('br'));const sp=document.createElement('span');sp.textContent=t;if(i===1){sp.style.color=role==='boss'?'#284f91':left>=0?'#2f7d2b':'#d2402f';sp.style.fontSize='1.15em'}bb.appendChild(sp)});$('vaultTag').textContent=Math.round(vaultNow()/10000).toLocaleString('ko-KR')+'만원'}
 /* ---------- dept icons ---------- */
@@ -565,7 +565,7 @@ function renderDaily(){const {todaySpent,dl,pool,per,left,pend}=dailyCalc();
   for(const el of document.querySelectorAll('[data-daily]')){el.textContent='';
     const l=document.createElement('span');l.className='l';l.textContent='오늘 하루 권장 예산';
     const b=document.createElement('b');b.textContent=won(per);if(per<=0)b.className='zero';
-    const s=document.createElement('small');s.textContent=pool<=0?`남은 생활비가 없어요 · ${end.getMonth()+1}/${end.getDate()}까지 ${dl}일`:`${end.getMonth()+1}/${end.getDate()}까지 ${dl}일 남음 · 오늘 쓴 돈 ${won(todaySpent)} · ${left>=0?'오늘 남은 권장액 '+won(left):won(-left)+' 초과'}`+(pend?` · 받을 돈 ${won(pend)} 포함`:'');
+    const s=document.createElement('small');s.textContent=pool<=0?`남은 생활비가 없어요 · ${end.getMonth()+1}/${end.getDate()}까지 ${dl}일`:`${end.getMonth()+1}/${end.getDate()}까지 ${dl}일 남음 · 오늘 쓴 돈 ${won(todaySpent)} · ${left>=0?'오늘 남은 권장액 '+won(left):'오늘 권장보다 '+won(-left)+' 더 씀 (내일 권장액이 조금 줄어요)'}`+(pend?` · 받을 돈 ${won(pend)} 포함`:'');
     el.append(l,b,s)}}
 
 /* ---------- PDF report ---------- */
